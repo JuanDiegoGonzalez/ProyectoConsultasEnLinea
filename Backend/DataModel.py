@@ -16,6 +16,6 @@ class Row(BaseModel):
 class DataModel(BaseModel):
     study_and_condition: str
 
-    #Esta función retorna los nombres de las columnas correspondientes con el modelo esxportado en joblib.
+    # Esta función retorna los nombres de las columnas correspondientes con el modelo exportado en joblib.
     def columns(self):
         return ["study_and_condition"]

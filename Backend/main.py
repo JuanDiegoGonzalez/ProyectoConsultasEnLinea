@@ -47,7 +47,6 @@ def make_predictions(textos: DataModel):
   predictions = outputs.logits.argmax(dim=-1)
 
   # Step 6: Map predictions to label names
-  # Assuming 'labels' was a list of original labels used during training
   label_mapping = list(set(labels))  # Unique label names from the training dataset
   predicted_labels = [label_mapping[pred] for pred in predictions.tolist()]
 
