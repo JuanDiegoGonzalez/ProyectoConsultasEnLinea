@@ -47,6 +47,6 @@
 
 ## Instrucciones de ejecución de la aplicación web:
 
-1. Abrir la carpeta "Frontend" desde el explorador de archivos y darle doble click izquierdo al archivo chat.html. Si no abre de esta forma, intentar con click derecho > abrir con > seleccionar el explorador web de su preferencia.
+1. Abrir la carpeta "Frontend" desde el explorador de archivos y darle doble click izquierdo al archivo chatbot.html. Si no abre de esta forma, intentar con click derecho > abrir con > seleccionar el explorador web de su preferencia.
 
 2. Nótese que se debe haber desplegado el API (Backend) como se indicó anteriormente para que la aplicación web funcione correctamente.

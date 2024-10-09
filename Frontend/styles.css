@@ -1,0 +1,201 @@
+.uSlider .defaultDynamic .slick-next,
+.slick-next {
+	right: 5.2rem;
+}
+
+.uSlider .defaultDynamic .slick-prev,
+.slick-prev {
+	left: 5.2rem;
+}
+
+.float-buttons-social {
+	top: 55vh;
+}
+
+.dModPublicaciones .btn,
+.dModPublicaciones .c-btn {
+	min-width: 5em;
+}
+
+.slider_banner.icon-style.full-width .item a .image {
+	width: 100%;
+	height: 100px;
+}
+
+.slider_banner.icon-style.full-width .item a .image img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.slider_banner.icon-style.full-width .item a:hover .image img,
+.slider_banner.icon-style.full-width .item a:focus .image img {
+	transform: scale(1);
+}
+
+.slider_banner.icon-style.full-width .item a:hover .rollover-box title,
+.slider_banner.icon-style.full-width .item a:focus .rollover-box title {
+	color: #FFFFFF;
+}
+
+.slider_banner.icon-style.full-width .new-tools-box {
+	display: none !important;
+}
+
+.logo-x2 .header_entidad .row .logo_entidad a.logo_horizontal img {
+	max-height: 84px !important;
+}
+
+@media screen and (max-width: 767px) {
+	.header-block.logo-x2 .header_entidad .buscar_entidad {
+		top: 169px;
+	}
+}
+
+@media screen and (max-width: 400px) {
+	.header-block.logo-x2 .header_entidad .buscar_entidad {
+		top: 150px;
+	}
+}
+
+.documentos .pdf>a {
+	background: url(/mod/Documentos/img/pdf.png) center no-repeat;
+}
+
+.infoDocumentos-fix {
+	display: block !important;
+}
+
+.publication-container a {
+	color: #dc7240;
+}
+
+@media only screen and (max-width: 600px) {
+	body {
+		overflow-x: hidden !important;
+	}
+
+	.dPrincipal .slider_main .item a .image {
+		width: 100%;
+		height: auto;
+		max-height: 100%;
+		display: flex;
+	}
+
+	.uSlider .defaultDynamic .slick-prev,
+	.slick-prev {
+		left: 0;
+	}
+
+	.dPrincipal .slider_main .item .new-tools-box {
+		background: #dc7240;
+		min-height: auto;
+	}
+
+	.dPrincipal .slider_main .item .new-tools-box .title {
+		width: auto;
+	}
+
+	.dPrincipal .slider_main .item .new-tools-box .title p {
+		font-weight: 400;
+		font-size: .5em;
+		text-align: center;
+	}
+
+	.uSlider .buttons {
+		position: absolute;
+		left: 1em;
+		bottom: -2.5em;
+		z-index: 3;
+	}
+
+	.slick-dots {
+		display: none;
+	}
+
+	.block--gov-accessibility {
+		top: 70vh;
+	}
+
+	.scroll-to-top {
+		left: 5px !important;
+	}
+
+	.scroll-to-top button .label-button-star-up {
+		display: none;
+	}
+}
+
+@media screen and (max-width: 992px) {
+	.dPrincipal .slider_main .slick-next {
+		right: inherit;
+		left: 88% !important;
+	}
+}
+
+.slider_banner.no-date .new-tools-box {
+	display: none !important;
+}
+
+.slider_banner.icon-style.nxBlockDynamicLayout4 .dynamicStyle2 .item a.content-box+a.content-box {
+	position: relative;
+	top: 0;
+	margin: 1rem 0 0 0;
+	height: auto;
+	background: none;
+}
+
+.slider_banner.icon-style.nxBlockDynamicLayout4 .dynamicStyle2 .item a.content-box+a.content-box:hover,
+.slider_banner.icon-style.nxBlockDynamicLayout4 .dynamicStyle2 .item a.content-box:hover+a.content-box {
+	color: #FFFFFF;
+	background-color: #dc7240;
+}
+
+.slider_banner.icon-style.nxBlockDynamicLayout4 .dynamicStyle2 .item a.content-box+a.content-box:hover .title,
+.slider_banner.icon-style.nxBlockDynamicLayout4 .dynamicStyle2 .item a.content-box:hover+a.content-box .title {
+	color: #FFFFFF;
+}
+
+.slider-institucional .dynamicStyle2 .image {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: 1/1;
+}
+
+.slider-institucional .dynamicStyle2 .item {
+	position: relative;
+}
+
+.slider-institucional .dynamicStyle2 .item .content-box+.content-box {
+	position: absolute;
+	top: 0;
+	z-index: 2;
+	width: calc(100% - 2rem);
+	height: 100%;
+	border-radius: 0 0 10px 10px;
+}
+
+.floating-list {
+	padding-left: 0 !important;
+	list-style: none !important;
+	margin-bottom: 0 !important;
+	position: fixed;
+	z-index: 99;
+	bottom: 8rem;
+	right: 1rem;
+}
+
+.floating-list .link-img img {
+	-webkit-transform: scale(1);
+	transform: scale(1);
+	-webkit-transition: 0.3s ease-in-out;
+	transition: 0.3s ease-in-out;
+}
+
+.floating-list .link-img:hover img,
+.floating-list .link-img:focus img {
+	-webkit-transform: scale(1.1);
+	transform: scale(1.1);
+	-webkit-filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.71));
+	filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.71));
+}
