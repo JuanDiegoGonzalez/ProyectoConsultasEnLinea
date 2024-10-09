@@ -11,7 +11,7 @@ document.getElementById('chatbot-header').onclick = function () {
 // Function to append messages to chat
 function appendMessage(content, sender = 'user') {
    const messageElement = document.createElement('div');
-   messageElement.textContent = sender === 'user' ? `You: ${content}` : `Bot: ${content}`;
+   messageElement.textContent = sender === 'user' ? `Tú: ${content}` : `Sistema: ${content}`;
    document.getElementById('chatbot-messages').appendChild(messageElement);
 }
 
@@ -34,7 +34,7 @@ document.getElementById('send-button').onclick = async function () {
             headers: {
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({study_and_condition: message}),
+            body: JSON.stringify({texto: message}),
          });
          
          const data = await response.json();

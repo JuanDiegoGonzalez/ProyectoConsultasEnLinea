@@ -10,6 +10,12 @@ import pandas as pd
 app = FastAPI()
 model = load("assets/trained_bert_model.joblib")
 
+data = pd.read_excel('assets/Datos de entrenamiento.xlsx')
+labels = data['Intención'].tolist()
+label_mapping = list(set(labels))  # Unique label names from the training dataset
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
 origins = ["*"]
 
 app.add_middleware(
@@ -29,28 +35,22 @@ def intgrantes():
    return "Juan Ignacio Arbelaez Velez, Brenda Catalina Barahona Pinilla y Juan Diego Gonzalez Gomez"
 
 @app.post("/predict")
-def make_predictions(textos: DataModel):
-  data = pd.read_excel('assets/Datos de entrenamiento.xlsx')
-  labels = data['Intención'].tolist()
-
-  tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-  # Step 3: Tokenize new input texts for prediction
-  new_texts = [textos.study_and_condition]
+def make_predictions(input: DataModel):
+  # Tokenize new input texts for prediction
+  new_texts = [input.texto]
   new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
 
-  # Step 4: Make predictions
+  # Make predictions
   with torch.no_grad():
       outputs = model(**new_encodings)
 
-  # Step 5: Get the predicted labels
+  # Get the predicted labels
   predictions = outputs.logits.argmax(dim=-1)
 
-  # Step 6: Map predictions to label names
-  label_mapping = list(set(labels))  # Unique label names from the training dataset
+  # Map predictions to label names
   predicted_labels = [label_mapping[pred] for pred in predictions.tolist()]
 
-  # Step 7: Print the predicted label for each input text
+  # Print the predicted label for each input text
   for i, text in enumerate(new_texts):
       result = predicted_labels[i]
       tipoConsulta = ""
