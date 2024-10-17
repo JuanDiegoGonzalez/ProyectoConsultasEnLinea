@@ -23,7 +23,20 @@ document.getElementById('chatbot-header').onclick = function () {
 function appendMessage(content, sender = 'user') {
    const messageElement = document.createElement('div');
    messageElement.textContent = sender === 'user' ? `Tú: ${content}` : `Sistema: ${content}`;
+
+   // Añadir la clase correcta dependiendo del remitente
+   messageElement.classList.add('message');
+   if (sender === 'user') {
+      messageElement.classList.add('user');
+   } else {
+      messageElement.classList.add('bot');
+   }
+
    document.getElementById('chatbot-messages').appendChild(messageElement);
+
+   // Scroll automático hacia el final cuando se añaden nuevos mensajes
+   const messagesContainer = document.getElementById('chatbot-messages');
+   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Send message functionality

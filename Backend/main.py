@@ -43,21 +43,16 @@ def intgrantes():
    return "Juan Ignacio Arbelaez Velez, Brenda Catalina Barahona Pinilla y Juan Diego Gonzalez Gomez"
 
 # ---------------------------------
-# Listas
-# ---------------------------------
-
-tiposDocumento = ["CARNETDIPLOMATICO", "CEDULACIUDADANIA", "CEDULAEXTRANJERIA", "PASAPORTE", "PERMISOPROTECCIONTEMPORAL", "REGISTROCIVIL", "TARJETAIDENTIDAD"]
-tiposProcedencia = ["NACIONAL", "EXTRANJERO", "DIPLOMATICO"]
-
-# ---------------------------------
 # Variables
 # ---------------------------------
 
 var_tipoConsulta = ""
 
+# Consulta Persona
 var_tipoDocumento = ""
 var_numeroDocumento = ""
 
+# Consulta Vehículo
 var_procedencia = "Nacional" # Default
 var_consultarPor = "" # "Placa y Propietario" # Default
 var_numeroPlaca = ""
