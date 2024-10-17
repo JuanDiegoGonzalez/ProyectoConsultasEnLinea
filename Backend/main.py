@@ -224,5 +224,5 @@ def consulta_vehiculo():
         ...
       
     case _:
-      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTMN)"
+      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTMN"
       return(f"{respuesta}\n")
