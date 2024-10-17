@@ -40,7 +40,6 @@
 }
 
 .message {
-	background-color: #e9ecef;
 	padding: 10px;
 	border-radius: 15px;
 	margin-bottom: 0;
@@ -52,11 +51,14 @@
 	background-color: #007bff;
 	color: white;
 	align-self: flex-end;
+	border-top-right-radius: 0;
 }
 
 .message.bot {
 	background-color: #e2e3e5;
 	align-self: flex-start;
+	border-top-left-radius: 0;
+	color: black;
 }
 
 #chatbot-input {
