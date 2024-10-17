@@ -1,3 +1,14 @@
+// Mostrar el chatbot y enviar mensaje de bienvenida después de 3 segundos
+window.onload = function () {
+   setTimeout(function () {
+      const content = document.getElementById('chatbot-content');
+      content.style.display = 'block'; // Mostrar el contenido del chatbot
+
+      // Mensaje de bienvenida al usuario
+      appendMessage('Hola! ¿En qué puedo ayudarte hoy?', 'bot');
+   }, 1500); // 1500 ms = 1.5 segundos
+};
+
 // Toggle chatbot visibility when header is clicked
 document.getElementById('chatbot-header').onclick = function () {
    const content = document.getElementById('chatbot-content');
@@ -29,7 +40,7 @@ document.getElementById('send-button').onclick = async function () {
 
       // Send the message to the backend
       try {
-         const response = await fetch('http://127.0.0.1:8000/predict', {
+         const response = await fetch('http://127.0.0.1:8000/talk', {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
