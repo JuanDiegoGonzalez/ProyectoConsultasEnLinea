@@ -4,6 +4,8 @@ from joblib import load
 from DataModel import DataModel
 
 from transformers import BertTokenizer
+import re
+import unicodedata
 import torch
 import pandas as pd
 
@@ -50,16 +52,16 @@ var_tipoConsulta = ""
 
 # Consulta Persona
 var_tipoDocumento = ""
-var_numeroDocumento = ""
+var_numeroDocumento = "" # TODO
 
 # Consulta Vehículo
 var_procedencia = "Nacional" # Default
-var_consultarPor = "" # "Placa y Propietario" # Default
+var_consultarPor = ""
 var_numeroPlaca = ""
-var_numeroVIN = ""
-var_numeroSOAT = ""
-var_aseguradora = ""
-var_numeroRTM = ""
+var_numeroVIN = "" # TODO
+var_numeroSOAT = "" # TODO
+var_aseguradora = "" ###
+var_numeroRTM = "" # TODO
 
 # ---------------------------------
 # Hilo principal
@@ -67,7 +69,7 @@ var_numeroRTM = ""
 
 @app.post("/talk")
 def talk(input: DataModel):
-  # TODO: identificar_datos()
+  identificar_datos(input.texto)
 
   if var_tipoConsulta == "":
     return make_predictions(input)
@@ -82,6 +84,8 @@ def talk(input: DataModel):
 # Método para predecir la intención
 # ---------------------------------
 def make_predictions(input: DataModel):
+    global var_tipoConsulta
+
   # Tokenize new input texts for prediction
     new_texts = [input.texto]
     new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
@@ -113,6 +117,90 @@ def make_predictions(input: DataModel):
           return(f"{respuesta}\n")
 
 # ---------------------------------
+# Método para identificar datos
+# ---------------------------------
+
+patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
+patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
+patron_placa_carro = r'\b[A-Z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
+patron_placa_moto = r'\b[A-Z]{3}\d{2}[A-Z]\b'  # Para placas con 3 letras, 2 dígitos y una letra al final
+
+opciones_tipo_documento = {
+    "Carnet Diplomático": r'\bcarnet\b|\bdiplomatico\b',
+    "Cédula de Ciudadanía": r'\bcedula\b|\bciudadania\b',
+    "Cédula de Extranjería": r'\bextranjeria\b',
+    "Pasaporte": r'\bpasaporte\b',
+    "Permiso por Protección Temporal": r'\bpermiso\b|\bproteccion\b|\btemporal\b',
+    "Registro Civil": r'\bregistro\b|\bcivil\b',
+    "Tarjeta de Identidad": r'\btarjeta\b|\bidentidad\b'
+}
+
+opciones_consultar_por = {
+    "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
+    "VIN (Número único de identificación)": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
+    "SOAT": r'\bsoat\b',
+    "PVO (Planilla de viaje ocasional)": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
+    "Guía de movilidad": r'\bguia\b|\bmovilidad\b',
+    "RTM": r'\brtm\b'
+}
+
+opicones_aseguradora = {
+    "ALLIANZ SEGUROS S.A.": r'\ballianz\b',
+    "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\bsolidaria\b|\bcooperativa\b|\bcolombia\b|\bentidad\b',
+    "AXA COLPATRIA SEGUROS SA": r'\baxa\b|\bcolpatria\b',
+    "CARDIF COLOMBIA SEGUROS GENERALES SA": r'\bcardif\b',
+    "COMPAÑIA MUNDIAL DE SEGUROS SA": r'\bmundial\b',
+    "HDI SEGUROS COLOMBIA S.A.": r'\bhdi\b',
+    "LA EQUIDAD SEGUROS GENERALES ORGANISMO COOPERATIVO": r'\bequidad\b|\bcooperativo\b',
+    "LA PREVISORA S.A. COMPAÑIA DE SEGUROS": r'\bprevisora\b',
+    "MAPFRE SEGUROS GENERALES DE COLOMBIA S.A.": r'\bmapfre\b',
+    "SEGUROS COMERCIALES BOLIVAR S.A": r'\bbolivar\b|\bcomerciales\b',
+    "SEGUROS DEL ESTADO S.A.": r'\bestado\b',
+    "SEGUROS GENERALES SURAMERICANA S.A.": r'\bsuramericana\b',
+    "ZURICH COLOMBIA SEGUROS S.A.": r'\bzurich\b'
+}
+
+def identificar_datos(texto):
+  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_consultarPor, var_aseguradora
+
+  texto = unicodedata.normalize('NFD', texto)
+  texto = texto.encode('ascii', 'ignore').decode('utf-8')
+  texto = texto.lower()
+
+  # Tipo Documento
+  for opcion, patron in opciones_tipo_documento.items():
+    if re.search(patron, texto):
+      var_tipoDocumento = opcion
+
+  # Cedula
+  busqueda = re.search(patron_cedula1, texto)
+  if busqueda is not None:
+    var_numeroDocumento = busqueda.group()
+  
+  busqueda = re.search(patron_cedula2, texto)
+  if busqueda is not None:
+    var_numeroDocumento = busqueda.group()
+
+  # Consulta Vehiculo - Consultar por
+  for opcion, patron in opciones_consultar_por.items():
+    if re.search(patron, texto):
+      var_consultarPor = opcion
+
+  # Placa
+  busqueda = re.search(patron_placa_carro, texto)
+  if busqueda is not None:
+    var_numeroPlaca = busqueda.group()
+  
+  busqueda = re.search(patron_placa_moto, texto)
+  if busqueda is not None:
+    var_numeroPlaca = busqueda.group()
+
+  # Aseguradora
+  for opcion, patron in opicones_aseguradora.items():
+    if re.search(patron, texto):
+      var_aseguradora = opcion
+  
+# ---------------------------------
 # Método Consulta Persona
 # ---------------------------------
 def consulta_persona():
@@ -130,6 +218,7 @@ def consulta_persona():
   
   else:
     # TODO: Hacer consulta persona
+    return("Consulta BD: " + var_tipoDocumento + ", " + var_numeroDocumento)
     ...
 
 # ---------------------------------
