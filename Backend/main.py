@@ -321,13 +321,13 @@ def consulta_vehiculo():
 # Query Consulta Persona
 # ---------------------------------
 def query_persona():
-  excel_file = 'data/Datos_Dummy_Persona.xlsx'
-  df = pd.read_excel(excel_file)
+  excel_file = 'data/Datos_Dummy_Personas.xlsx'
+  df = pd.read_excel(excel_file, dtype=str)
 
   result = df[(df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
               (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
 
   if not result.empty:
-      return("Found the following rows:" + result)
+      return("Se encontró el siguiente registro:" + result.to_string(index=False))
   else:
       return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO")
