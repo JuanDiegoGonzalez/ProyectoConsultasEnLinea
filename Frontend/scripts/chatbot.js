@@ -83,3 +83,19 @@ document.getElementById('send-button').onclick = async function () {
       }
    }
 };
+
+// Nueva consulta
+document.getElementById('new-button').onclick = async function () {
+   try {
+      const response = await fetch('http://127.0.0.1:8000/new', {
+         method: 'POST',
+         headers: {
+            'Content-Type': 'application/json',
+         }
+      });
+      appendMessage('Hola! ¿En qué puedo ayudarte hoy?', 'bot');
+   } catch (error) {
+      console.error('Error:', error);
+      appendMessage('Error: Failed to contact server', 'bot');
+   }
+};

@@ -127,10 +127,11 @@ def make_predictions(input: DataModel):
 # Método para identificar datos
 # ---------------------------------
 
+patron_VIN_SOAT = r'\b\d{6}\b'  # Para VIN, SOAT de 6 dígitos
 patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
 patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
-patron_placa_carro = r'\b[A-Z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
-patron_placa_moto = r'\b[A-Z]{3}\d{2}[A-Z]\b'  # Para placas con 3 letras, 2 dígitos y una letra al final
+patron_placa_carro = r'\b[a-z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
+patron_placa_moto = r'\b[a-z]{3}\d{2}[a-z]\b'  # Para placas con 3 letras, 2 dígitos y una letra al final
 
 opciones_tipo_documento = {
     "Carnet Diplomático": r'\bcarnet\b|\bdiplomatico\b',
@@ -168,7 +169,7 @@ opicones_aseguradora = {
 }
 
 def identificar_datos(texto):
-  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_consultarPor, var_aseguradora
+  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora
 
   texto = unicodedata.normalize('NFD', texto)
   texto = texto.encode('ascii', 'ignore').decode('utf-8')
@@ -202,6 +203,12 @@ def identificar_datos(texto):
   if busqueda is not None:
     var_numeroPlaca = busqueda.group()
 
+  # VIN y SOAT
+  busqueda = re.search(patron_VIN_SOAT, texto)
+  if busqueda is not None:
+    var_numeroVIN = busqueda.group()
+    var_numeroSOAT = busqueda.group()
+
   # Aseguradora
   for opcion, patron in opicones_aseguradora.items():
     if re.search(patron, texto):
@@ -224,7 +231,6 @@ def consulta_persona():
     return(f"{respuesta}\n")
   
   else:
-    # TODO: Hacer consulta persona
     return query_persona()
 
 # ---------------------------------
@@ -237,15 +243,15 @@ def consulta_vehiculo():
         respuesta = "Indica la placa del vehículo y el tipo y número de documento del propietario"
         return(f"{respuesta}\n")
 
-      if (var_numeroPlaca == "") and (var_tipoDocumento == ""):
+      elif (var_numeroPlaca == "") and (var_tipoDocumento == ""):
         respuesta = "Indica la placa del vehículo y el tipo de documento del propietario"
         return(f"{respuesta}\n")
       
-      if (var_numeroPlaca == "") and (var_numeroDocumento == ""):
+      elif (var_numeroPlaca == "") and (var_numeroDocumento == ""):
         respuesta = "Indica la placa del vehículo y el número de documento del propietario"
         return(f"{respuesta}\n")
       
-      if (var_tipoDocumento == "") and (var_numeroDocumento == ""):
+      elif (var_tipoDocumento == "") and (var_numeroDocumento == ""):
         respuesta = "Indica el tipo y número de documento del propietario"
         return(f"{respuesta}\n")
       
@@ -262,7 +268,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        consulta_vehiculo()
+        return query_vehiculo()
 
     case "VIN":
       if var_numeroPlaca == "":
@@ -270,7 +276,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        consulta_vehiculo()
+        return query_vehiculo()
 
     case "SOAT":
       if (var_numeroSOAT == "") and (var_aseguradora == ""):
@@ -286,7 +292,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        consulta_vehiculo()
+        return query_vehiculo()
 
     case "PVO":
       if var_numeroPlaca == "":
@@ -294,7 +300,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        consulta_vehiculo()
+        return query_vehiculo()
       
     case "Guía de movilidad":
       if var_numeroPlaca == "":
@@ -302,7 +308,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        consulta_vehiculo()
+        return query_vehiculo()
 
     case "RTM":
       if var_numeroRTM == "":
@@ -310,7 +316,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        consulta_vehiculo()
+        return query_vehiculo()
 
     case _:
       respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTMN"
@@ -337,9 +343,9 @@ def query_persona():
 # ---------------------------------
 respuestas_error_vehiculos = {
     "Placa y Propietario": "Los datos registrados no corresponden con los propietarios activos para el vehículo consultado.",
-    "VIN": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
+    "VIN (Número único de identificación)": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "SOAT": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
-    "PVO": "Señor Usuario no existe información de PVO para el vehículo consultado",
+    "PVO (Planilla de viaje ocasional)": "Señor Usuario no existe información de PVO para el vehículo consultado",
     "Guía de movilidad": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "RTM": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT."
 }
@@ -348,16 +354,18 @@ def query_vehiculo():
   excel_file = 'data/Datos_Dummy_Vehiculos.xlsx'
   df = pd.read_excel(excel_file, dtype=str)
 
+  print(var_numeroPlaca, var_tipoDocumento, var_numeroDocumento)
+
   match var_consultarPor:
     case "Placa y Propietario":
-      result = df[(df['Numero de placa'] == var_numeroPlaca) & 
+      result = df[(df['Numero de placa'] == var_numeroPlaca.upper()) & 
                   (df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
                   (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
-    case "VIN":
+    case "VIN (Número único de identificación)":
       result = df[(df['Numero de VIN'] == var_numeroVIN)]
     case "SOAT":
       result = df[(df['Poliza Soat'] == var_numeroSOAT)]
-    case "PVO":
+    case "PVO (Planilla de viaje ocasional)":
       result = df[(df['Numero de placa'] == var_numeroPlaca)]
     case "Guía de movilidad":
       result = df[(df['Numero de placa'] == var_numeroPlaca)]
@@ -372,12 +380,12 @@ def query_vehiculo():
     match var_consultarPor:
       case "Placa y Propietario":
         return(respuestas_error_vehiculos["Placa y Propietario"])
-      case "VIN":
-        return(respuestas_error_vehiculos["VIN"])
+      case "VIN (Número único de identificación)":
+        return(respuestas_error_vehiculos["VIN (Número único de identificación)"])
       case "SOAT":
         return(respuestas_error_vehiculos["SOAT"])
-      case "PVO":
-        return(respuestas_error_vehiculos["PVO"])
+      case "PVO (Planilla de viaje ocasional)":
+        return(respuestas_error_vehiculos["PVO (Planilla de viaje ocasional)"])
       case "Guía de movilidad":
         return(respuestas_error_vehiculos["Guía de movilidad"])
       case "RTM":
@@ -412,3 +420,13 @@ def generate_pdf(result):
   buffer.seek(0)
 
   return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": "attachment; filename=query_results.pdf"})
+
+# ---------------------------------
+# Nueva consulta
+# ---------------------------------
+
+@app.post("/new")
+def read_root():
+  global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM
+  
+  var_tipoConsulta = ""
