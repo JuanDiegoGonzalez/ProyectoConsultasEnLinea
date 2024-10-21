@@ -336,7 +336,7 @@ def query_persona():
     pdf = generate_pdf(result)
     return(pdf)
   else:
-    return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO")
+    return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO. Datos consultados: tipo de documento " + var_tipoDocumento + " y número de documento " + var_numeroDocumento + ".")
 
 # ---------------------------------
 # Query Consulta Vehículo
@@ -345,7 +345,7 @@ respuestas_error_vehiculos = {
     "Placa y Propietario": "Los datos registrados no corresponden con los propietarios activos para el vehículo consultado.",
     "VIN (Número único de identificación)": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "SOAT": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
-    "PVO (Planilla de viaje ocasional)": "Señor Usuario no existe información de PVO para el vehículo consultado",
+    "PVO (Planilla de viaje ocasional)": "Señor Usuario no existe información de PVO para el vehículo consultado.",
     "Guía de movilidad": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "RTM": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT."
 }
@@ -379,17 +379,17 @@ def query_vehiculo():
   else:
     match var_consultarPor:
       case "Placa y Propietario":
-        return(respuestas_error_vehiculos["Placa y Propietario"])
+        return(respuestas_error_vehiculos["Placa y Propietario"] + " Datos consultados: placa " + var_numeroPlaca + ", tipo de documento " + var_tipoDocumento + " y número de documento " + var_numeroDocumento + ".")
       case "VIN (Número único de identificación)":
-        return(respuestas_error_vehiculos["VIN (Número único de identificación)"])
+        return(respuestas_error_vehiculos["VIN (Número único de identificación)"] + " Datos consultados: VIN " + var_numeroVIN + ".")
       case "SOAT":
-        return(respuestas_error_vehiculos["SOAT"])
+        return(respuestas_error_vehiculos["SOAT"] + " Datos consultados: SOAT " + var_numeroSOAT + ".")
       case "PVO (Planilla de viaje ocasional)":
-        return(respuestas_error_vehiculos["PVO (Planilla de viaje ocasional)"])
+        return(respuestas_error_vehiculos["PVO (Planilla de viaje ocasional)"] + " Datos consultados: placa " + var_numeroPlaca + ".")
       case "Guía de movilidad":
-        return(respuestas_error_vehiculos["Guía de movilidad"])
+        return(respuestas_error_vehiculos["Guía de movilidad"] + " Datos consultados: placa " + var_numeroPlaca + ".")
       case "RTM":
-        return(respuestas_error_vehiculos["RTM"])
+        return(respuestas_error_vehiculos["RTM"] + " Datos consultados: RTM " + var_numeroRTM + ".")
 
 # ---------------------------------
 # Generador de PDF
