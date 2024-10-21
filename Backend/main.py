@@ -9,6 +9,8 @@ import unicodedata
 import torch
 import pandas as pd
 
+import pandas as pd
+
 # ---------------------------------
 # Preparación del modelo y CORS
 # ---------------------------------
@@ -218,8 +220,7 @@ def consulta_persona():
   
   else:
     # TODO: Hacer consulta persona
-    return("Consulta BD: " + var_tipoDocumento + ", " + var_numeroDocumento)
-    ...
+    return query_persona()
 
 # ---------------------------------
 # Método Consulta Vehículo
@@ -256,7 +257,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta persona
+        # TODO: Hacer consulta placa y propietario
         ...
 
     case "VIN":
@@ -315,3 +316,18 @@ def consulta_vehiculo():
     case _:
       respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTMN"
       return(f"{respuesta}\n")
+
+# ---------------------------------
+# Query Consulta Persona
+# ---------------------------------
+def query_persona():
+  excel_file = 'data/Datos_Dummy_Persona.xlsx'
+  df = pd.read_excel(excel_file)
+
+  result = df[(df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
+              (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
+
+  if not result.empty:
+      return("Found the following rows:" + result)
+  else:
+      return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO")
