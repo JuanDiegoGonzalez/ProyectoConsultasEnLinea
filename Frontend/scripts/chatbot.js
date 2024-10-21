@@ -61,10 +61,22 @@ document.getElementById('send-button').onclick = async function () {
             body: JSON.stringify({texto: message}),
          });
          
-         const data = await response.json();
-         
-         // Append the bot's response to the chat
-         appendMessage(data, 'bot');
+         const contentType = response.headers.get('Content-Type');
+
+         if (contentType === 'application/pdf') {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'response.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+         }
+         else {
+            const data = await response.json();
+            appendMessage(data, 'bot');
+         }
       } catch (error) {
          console.error('Error:', error);
          appendMessage('Error: Failed to contact server', 'bot');

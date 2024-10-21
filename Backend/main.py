@@ -9,7 +9,12 @@ import unicodedata
 import torch
 import pandas as pd
 
-import pandas as pd
+from fastapi import FastAPI, Response
+from fastapi.responses import StreamingResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from io import BytesIO
 
 # ---------------------------------
 # Preparación del modelo y CORS
@@ -257,8 +262,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta placa y propietario
-        ...
+        consulta_vehiculo()
 
     case "VIN":
       if var_numeroPlaca == "":
@@ -266,8 +270,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta VIN
-        ...
+        consulta_vehiculo()
 
     case "SOAT":
       if (var_numeroSOAT == "") and (var_aseguradora == ""):
@@ -283,8 +286,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta SOAT
-        ...
+        consulta_vehiculo()
 
     case "PVO":
       if var_numeroPlaca == "":
@@ -292,8 +294,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta PVO
-        ...
+        consulta_vehiculo()
       
     case "Guía de movilidad":
       if var_numeroPlaca == "":
@@ -301,8 +302,7 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta Guia de Movilidad
-        ...
+        consulta_vehiculo()
 
     case "RTM":
       if var_numeroRTM == "":
@@ -310,9 +310,8 @@ def consulta_vehiculo():
         return(f"{respuesta}\n")
       
       else:
-        # TODO: Hacer consulta RTM
-        ...
-      
+        consulta_vehiculo()
+
     case _:
       respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTMN"
       return(f"{respuesta}\n")
@@ -328,6 +327,88 @@ def query_persona():
               (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
 
   if not result.empty:
-      return("Se encontró el siguiente registro:" + result.to_string(index=False))
+    pdf = generate_pdf(result)
+    return(pdf)
   else:
-      return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO")
+    return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO")
+
+# ---------------------------------
+# Query Consulta Vehículo
+# ---------------------------------
+respuestas_error_vehiculos = {
+    "Placa y Propietario": "Los datos registrados no corresponden con los propietarios activos para el vehículo consultado.",
+    "VIN": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
+    "SOAT": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
+    "PVO": "Señor Usuario no existe información de PVO para el vehículo consultado",
+    "Guía de movilidad": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
+    "RTM": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT."
+}
+
+def query_vehiculo():
+  excel_file = 'data/Datos_Dummy_Vehiculos.xlsx'
+  df = pd.read_excel(excel_file, dtype=str)
+
+  match var_consultarPor:
+    case "Placa y Propietario":
+      result = df[(df['Numero de placa'] == var_numeroPlaca) & 
+                  (df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
+                  (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
+    case "VIN":
+      result = df[(df['Numero de VIN'] == var_numeroVIN)]
+    case "SOAT":
+      result = df[(df['Poliza Soat'] == var_numeroSOAT)]
+    case "PVO":
+      result = df[(df['Numero de placa'] == var_numeroPlaca)]
+    case "Guía de movilidad":
+      result = df[(df['Numero de placa'] == var_numeroPlaca)]
+    case "RTM":
+      # TODO
+      ...
+
+  if not result.empty:
+    pdf = generate_pdf(result)
+    return(pdf)
+  else:
+    match var_consultarPor:
+      case "Placa y Propietario":
+        return(respuestas_error_vehiculos["Placa y Propietario"])
+      case "VIN":
+        return(respuestas_error_vehiculos["VIN"])
+      case "SOAT":
+        return(respuestas_error_vehiculos["SOAT"])
+      case "PVO":
+        return(respuestas_error_vehiculos["PVO"])
+      case "Guía de movilidad":
+        return(respuestas_error_vehiculos["Guía de movilidad"])
+      case "RTM":
+        return(respuestas_error_vehiculos["RTM"])
+
+# ---------------------------------
+# Generador de PDF
+# ---------------------------------
+def generate_pdf(result):
+  buffer = BytesIO()
+  doc = SimpleDocTemplate(buffer, pagesize=letter)
+
+  data = [['Campo', 'Valor']]
+  for column in result.columns:
+      for value in result[column]:
+          data.append([column, value])
+
+  table = Table(data)
+
+  style = TableStyle([
+      ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+      ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+      ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+      ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+      ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+      ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+      ('GRID', (0, 0), (-1, -1), 1, colors.black),
+  ])
+  table.setStyle(style)
+
+  doc.build([table])
+  buffer.seek(0)
+
+  return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": "attachment; filename=query_results.pdf"})
