@@ -430,3 +430,190 @@ def read_root():
   global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM
   
   var_tipoConsulta = ""
+
+# ---------------------------------
+# Propuesta backend
+# ---------------------------------
+from DataModel import *
+from pydantic import ValidationError
+from typing import Dict, Type, List
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+from pydantic import ValidationError
+
+def validate_query_parameters(tipo_consulta: str):
+  """
+    Funcion para validar si estan todos los paarmetros de la consulta. 
+    Retorna una lista de parametros 
+  """
+  tipos_consulta_vehiculo = [ConsultaVehiculoPP, ConsultaVehiculoVIN, ConsultaVehiculoSOAT, ConsultaVehiculoPVO, 
+                            ConsultaVehiculoGuiaMovildiad, ConsultaVehiculoRTM]
+  tipos_consulta_persona = [ConsultaPersonas]
+
+  # Intenta inicializar una instancia del BaseModel
+  # Si hay un validation Error se llama otro metodo que devuelve un string con los parametros que se llamaron
+  # Si no hay un validation Error se llama otro metodo que hace la consulta 
+
+
+  # 
+
+
+  return None
+
+def new_consulta_persona(entidades: Dict) -> Dict:
+  """
+    Recibe las entidades del modelo en un diccionario
+    Si hay un Validation error entonces se llama a una funacion con los atributos que faltan. 
+    Si No se llama a una funcion para hacer la cinsulta a la BD
+  """
+  tipos_consulta_persona = [ConsultaPersonas]
+
+  try: 
+    print("Hello")
+  except ValidationError: 
+    pass
+
+  return None
+def new_consulta_vahiculo():
+  """
+    Recibe las entidades del modelo en un diccionario
+    Si hay un Validation error entonces se llama a una funacion con los atributos que faltan. 
+    Si No se llama a una funcion para hacer la cinsulta a la BD
+
+    TODO: Como manejar que hay varios tipos de consulta de vehiculo?
+  """
+  tipos_consulta_vehiculo = [ConsultaVehiculoPP, ConsultaVehiculoVIN, ConsultaVehiculoSOAT, ConsultaVehiculoPVO, 
+                            ConsultaVehiculoGuiaMovildiad, ConsultaVehiculoRTM]
+  return None
+
+@dataclass
+class ValidationResult:
+    """
+    Clase que representa el resultado de una validación
+    """
+    is_valid: bool
+    missing_parameters: List[str]
+    validation_type: Optional[str] = None  # Para identificar qué tipo de consulta fue validada
+
+
+def validate_query_parameters(tipo_consulta: str, entidades: Dict) -> ValidationResult:
+    """
+    Función para validar si están todos los parámetros de la consulta.
+    Solo se encarga de la validación, no del procesamiento.
+    
+    Args:
+        tipo_consulta: String indicando el tipo de consulta ('persona' o 'vehiculo')
+        entidades: Diccionario con las entidades extraídas
+        
+    Returns:
+        ValidationResult con el resultado de la validación
+    """
+    if tipo_consulta == "persona":
+        return validate_persona_parameters(entidades)
+    elif tipo_consulta == "vehiculo":
+        return validate_vehiculo_parameters(entidades)
+    else:
+        return ValidationResult(
+            is_valid=False,
+            missing_parameters=["tipo_consulta_valido"],
+            validation_type="unknown"
+        )
+
+def validate_persona_parameters(entidades: Dict) -> ValidationResult:
+    """
+    Valida los parámetros para una consulta de persona
+    """
+    try:
+        ConsultaPersonas(**entidades)
+        return ValidationResult(
+            is_valid=True,
+            missing_parameters=[],
+            validation_type="persona"
+        )
+    except ValidationError as e:
+        missing_params = get_missing_parameters(ConsultaPersonas, entidades)
+        return ValidationResult(
+            is_valid=False,
+            missing_parameters=missing_params,
+            validation_type="persona"
+        )
+    
+def validate_vehiculo_parameters(entidades: Dict) -> ValidationResult:
+    """
+    Valida los parámetros para una consulta de vehículo
+    """
+    tipos_consulta_vehiculo = [
+        ConsultaVehiculoPP,
+        ConsultaVehiculoVIN,
+        ConsultaVehiculoSOAT,
+        ConsultaVehiculoPVO,
+        ConsultaVehiculoGuiaMovildiad,
+        ConsultaVehiculoRTM
+    ]
+    
+    # Intentar cada tipo de consulta
+    for tipo_consulta in tipos_consulta_vehiculo:
+        try:
+            tipo_consulta(**entidades)
+            return ValidationResult(
+                is_valid=True,
+                missing_parameters=[],
+                validation_type=tipo_consulta.__name__
+            )
+        except ValidationError:
+            continue
+    
+    # Si ninguna validación fue exitosa, obtener los parámetros faltantes del tipo
+    # que requiere menos parámetros adicionales
+    min_params = float('inf')
+    mejor_tipo = None
+    mejor_params = []
+    
+    for tipo_consulta in tipos_consulta_vehiculo:
+        missing = get_missing_parameters(tipo_consulta, entidades)
+        if len(missing) < min_params:
+            min_params = len(missing)
+            mejor_tipo = tipo_consulta
+            mejor_params = missing
+    
+    return ValidationResult(
+        is_valid=False,
+        missing_parameters=mejor_params,
+        validation_type=mejor_tipo.__name__ if mejor_tipo else None
+    )
+
+def get_missing_parameters(model: Type[BaseModel], data: Dict) -> List[str]:
+    """
+    Obtiene la lista de parámetros faltantes de un modelo
+    """
+    try:
+        model(**data)
+        return []
+    except ValidationError as e:
+        return [error["loc"][0] for error in e.errors() 
+                if error["type"] == "value_error.missing"]
+    
+def process_query(tipo_consulta: str, entidades: Dict) -> Dict:
+    """
+    Procesa una consulta después de validarla
+    """
+    validation_result = validate_query_parameters(tipo_consulta, entidades)
+    
+    if not validation_result.is_valid:
+        return {
+            "success": False,
+            "error": "Faltan parámetros requeridos",
+            "missing_parameters": validation_result.missing_parameters
+        }
+        
+    # Si la validación fue exitosa, proceder con la consulta
+    if var_tipoConsulta == "persona":
+        return None
+    elif var_tipoConsulta == "vehiculo":
+        return None
+    
+    return {"success": False, "error": "Tipo de consulta no soportado"}
+
+
+
+
