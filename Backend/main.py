@@ -441,51 +441,6 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 from pydantic import ValidationError
 
-def validate_query_parameters(tipo_consulta: str):
-  """
-    Funcion para validar si estan todos los paarmetros de la consulta. 
-    Retorna una lista de parametros 
-  """
-  tipos_consulta_vehiculo = [ConsultaVehiculoPP, ConsultaVehiculoVIN, ConsultaVehiculoSOAT, ConsultaVehiculoPVO, 
-                            ConsultaVehiculoGuiaMovildiad, ConsultaVehiculoRTM]
-  tipos_consulta_persona = [ConsultaPersonas]
-
-  # Intenta inicializar una instancia del BaseModel
-  # Si hay un validation Error se llama otro metodo que devuelve un string con los parametros que se llamaron
-  # Si no hay un validation Error se llama otro metodo que hace la consulta 
-
-
-  # 
-
-
-  return None
-
-def new_consulta_persona(entidades: Dict) -> Dict:
-  """
-    Recibe las entidades del modelo en un diccionario
-    Si hay un Validation error entonces se llama a una funacion con los atributos que faltan. 
-    Si No se llama a una funcion para hacer la cinsulta a la BD
-  """
-  tipos_consulta_persona = [ConsultaPersonas]
-
-  try: 
-    print("Hello")
-  except ValidationError: 
-    pass
-
-  return None
-def new_consulta_vahiculo():
-  """
-    Recibe las entidades del modelo en un diccionario
-    Si hay un Validation error entonces se llama a una funacion con los atributos que faltan. 
-    Si No se llama a una funcion para hacer la cinsulta a la BD
-
-    TODO: Como manejar que hay varios tipos de consulta de vehiculo?
-  """
-  tipos_consulta_vehiculo = [ConsultaVehiculoPP, ConsultaVehiculoVIN, ConsultaVehiculoSOAT, ConsultaVehiculoPVO, 
-                            ConsultaVehiculoGuiaMovildiad, ConsultaVehiculoRTM]
-  return None
-
 @dataclass
 class ValidationResult:
     """
