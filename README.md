@@ -15,7 +15,20 @@
   git clone https://github.com/
   ```
 
-2. Abrir el proyecto en Visual Studio Code o el IDE de su preferencia
+2. Descargar Git LFS:
+
+- Si está en una máquina Windows, descarguelo desde https://git-lfs.com/
+- Si está en una máquina linux, ejecute el siguiente comando:
+
+  ```shell
+  sudo apt get lfs ??
+  ```
+
+3. Desde una terminal acceder a la carpeta del repositorio y ejecutar:
+
+  ```shell
+  git lfs fetch --all
+  ```
 
 ## Instrucciones de despliegue del API (Backend)
 
