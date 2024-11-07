@@ -127,7 +127,8 @@ def make_predictions(input: DataModel):
 # Método para identificar datos
 # ---------------------------------
 
-patron_VIN_SOAT = r'\b\d{6}\b'  # Para VIN, SOAT de 6 dígitos
+patron_VIN = r'\b[a-hj-npr-z0-9]{17}\b' # Para VIN alfanumérico de 17 caracteres
+patron_SOAT = r'\b\d{6}\b'  # Para SOAT de 6 dígitos
 patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
 patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
 patron_placa_carro = r'\b[a-z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
@@ -145,9 +146,9 @@ opciones_tipo_documento = {
 
 opciones_consultar_por = {
     "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
-    "VIN (Número único de identificación)": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
+    "VIN": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
     "SOAT": r'\bsoat\b',
-    "PVO (Planilla de viaje ocasional)": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
+    "PVO": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
     "Guía de movilidad": r'\bguia\b|\bmovilidad\b',
     "RTM": r'\brtm\b'
 }
@@ -203,10 +204,14 @@ def identificar_datos(texto):
   if busqueda is not None:
     var_numeroPlaca = busqueda.group()
 
-  # VIN y SOAT
-  busqueda = re.search(patron_VIN_SOAT, texto)
+  # VIN
+  busqueda = re.search(patron_VIN, texto)
   if busqueda is not None:
     var_numeroVIN = busqueda.group()
+
+  # SOAT
+  busqueda = re.search(patron_SOAT, texto)
+  if busqueda is not None:
     var_numeroSOAT = busqueda.group()
 
   # Aseguradora
@@ -271,7 +276,7 @@ def consulta_vehiculo():
         return query_vehiculo()
 
     case "VIN":
-      if var_numeroPlaca == "":
+      if var_numeroVIN == "":
         respuesta = "Indica el número VIN del vehículo"
         return(f"{respuesta}\n")
       
@@ -343,9 +348,9 @@ def query_persona():
 # ---------------------------------
 respuestas_error_vehiculos = {
     "Placa y Propietario": "Los datos registrados no corresponden con los propietarios activos para el vehículo consultado.",
-    "VIN (Número único de identificación)": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
+    "VIN": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "SOAT": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
-    "PVO (Planilla de viaje ocasional)": "Señor Usuario no existe información de PVO para el vehículo consultado.",
+    "PVO": "Señor Usuario no existe información de PVO para el vehículo consultado.",
     "Guía de movilidad": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "RTM": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT."
 }
@@ -358,17 +363,17 @@ def query_vehiculo():
 
   match var_consultarPor:
     case "Placa y Propietario":
-      result = df[(df['Numero de placa'] == var_numeroPlaca.upper()) & 
-                  (df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
-                  (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
-    case "VIN (Número único de identificación)":
-      result = df[(df['Numero de VIN'] == var_numeroVIN)]
+      result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper()) & 
+                  (df['Tipo_Documento_Propietario'].str.upper() == var_tipoDocumento.upper()) & 
+                  (df['Numero_Documento_Propietario'].str.upper() == var_numeroDocumento.upper())]
+    case "VIN":
+      result = df[(df['Numero de VIN'].str.upper() == var_numeroVIN.upper())]
     case "SOAT":
-      result = df[(df['Poliza Soat'] == var_numeroSOAT)]
-    case "PVO (Planilla de viaje ocasional)":
-      result = df[(df['Numero de placa'] == var_numeroPlaca)]
+      result = df[(df['Poliza Soat'].str.upper() == var_numeroSOAT.upper())]
+    case "PVO":
+      result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper())]
     case "Guía de movilidad":
-      result = df[(df['Numero de placa'] == var_numeroPlaca)]
+      result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper())]
     case "RTM":
       # TODO
       ...
@@ -379,17 +384,17 @@ def query_vehiculo():
   else:
     match var_consultarPor:
       case "Placa y Propietario":
-        return(respuestas_error_vehiculos["Placa y Propietario"] + " Datos consultados: placa " + var_numeroPlaca + ", tipo de documento " + var_tipoDocumento + " y número de documento " + var_numeroDocumento + ".")
-      case "VIN (Número único de identificación)":
-        return(respuestas_error_vehiculos["VIN (Número único de identificación)"] + " Datos consultados: VIN " + var_numeroVIN + ".")
+        return(respuestas_error_vehiculos["Placa y Propietario"] + " Datos consultados: placa " + var_numeroPlaca.upper() + ", tipo de documento " + var_tipoDocumento.upper() + " y número de documento " + var_numeroDocumento.upper() + ".")
+      case "VIN":
+        return(respuestas_error_vehiculos["VIN"] + " Datos consultados: VIN " + var_numeroVIN.upper() + ".")
       case "SOAT":
-        return(respuestas_error_vehiculos["SOAT"] + " Datos consultados: SOAT " + var_numeroSOAT + ".")
-      case "PVO (Planilla de viaje ocasional)":
-        return(respuestas_error_vehiculos["PVO (Planilla de viaje ocasional)"] + " Datos consultados: placa " + var_numeroPlaca + ".")
+        return(respuestas_error_vehiculos["SOAT"] + " Datos consultados: SOAT " + var_numeroSOAT.upper() + ".")
+      case "PVO":
+        return(respuestas_error_vehiculos["PVO"] + " Datos consultados: placa " + var_numeroPlaca.upper() + ".")
       case "Guía de movilidad":
-        return(respuestas_error_vehiculos["Guía de movilidad"] + " Datos consultados: placa " + var_numeroPlaca + ".")
+        return(respuestas_error_vehiculos["Guía de movilidad"] + " Datos consultados: placa " + var_numeroPlaca.upper() + ".")
       case "RTM":
-        return(respuestas_error_vehiculos["RTM"] + " Datos consultados: RTM " + var_numeroRTM + ".")
+        return(respuestas_error_vehiculos["RTM"] + " Datos consultados: RTM " + var_numeroRTM.upper() + ".")
 
 # ---------------------------------
 # Generador de PDF
