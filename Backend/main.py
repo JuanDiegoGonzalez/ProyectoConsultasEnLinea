@@ -65,9 +65,9 @@ var_numeroDocumento = "" # TODO
 var_procedencia = "Nacional" # Default
 var_consultarPor = ""
 var_numeroPlaca = ""
-var_numeroVIN = "" # TODO
-var_numeroSOAT = "" # TODO
-var_aseguradora = "" ###
+var_numeroVIN = ""
+var_numeroSOAT = ""
+var_aseguradora = ""
 var_numeroRTM = "" # TODO
 
 # ---------------------------------
