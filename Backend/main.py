@@ -9,7 +9,7 @@ import unicodedata
 import torch
 import pandas as pd
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -93,21 +93,21 @@ def talk(input: DataModel):
 def make_predictions(input: DataModel):
     global var_tipoConsulta
 
-  # Tokenize new input texts for prediction
+    # Tokenizar los textos de entrada para hacer la predicción
     new_texts = [input.texto]
     new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
 
-    # Make predictions
+    # Hacer las predicciones
     with torch.no_grad():
         outputs = model(**new_encodings)
 
-    # Get the predicted labels
+    # Obtener las clases predichas
     predictions = outputs.logits.argmax(dim=-1)
 
-    # Map predictions to label names
+    # Mapear las predicciones a los nombres de las clases (Consulta vehículo, consulta persona, otra consulta)
     predicted_labels = [label_mapping[pred] for pred in predictions.tolist()]
 
-    # Print the predicted label for each input text
+    # Asignar el tipo de consulta a la variable correspondiente y llamar la funcion que realiza esa consulta
     for i, text in enumerate(new_texts):
         result = predicted_labels[i]
 
@@ -127,6 +127,7 @@ def make_predictions(input: DataModel):
 # Método para identificar datos
 # ---------------------------------
 
+# Patrones regex para los datos alfanuméricos
 patron_VIN = r'\b[a-hj-npr-z0-9]{17}\b' # Para VIN alfanumérico de 17 caracteres
 patron_SOAT = r'\b\d{13}\b'  # Para SOAT de 13 dígitos
 patron_RTM = r'\b\d{8}\b'  # Para RTM de 8 dígitos
@@ -135,6 +136,7 @@ patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
 patron_placa_carro = r'\b[a-z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
 patron_placa_moto = r'\b[a-z]{3}\d{2}[a-z]\b'  # Para placas con 3 letras, 2 dígitos y una letra al final
 
+# Opciones del tipo de documento
 opciones_tipo_documento = {
     "Carnet Diplomático": r'\bcarnet\b|\bdiplomatico\b',
     "Cédula de Ciudadanía": r'\bcedula\b|\bciudadania\b',
@@ -145,6 +147,7 @@ opciones_tipo_documento = {
     "Tarjeta de Identidad": r'\btarjeta\b|\bidentidad\b'
 }
 
+# Opciones de consulta para la consulta de vehículos
 opciones_consultar_por = {
     "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
     "VIN": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
@@ -154,7 +157,8 @@ opciones_consultar_por = {
     "RTM": r'\brtm\b|\brevision\b|\btecnico\b|\bmecanica\b'
 }
 
-opicones_aseguradora = {
+# Opciones de aseguradoras para la consulta de vehículos por SOAT
+opciones_aseguradora = {
     "ALLIANZ SEGUROS S.A.": r'\ballianz\b',
     "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\bsolidaria\b|\bcooperativa\b|\bcolombia\b|\bentidad\b',
     "AXA COLPATRIA SEGUROS SA": r'\baxa\b|\bcolpatria\b',
@@ -170,6 +174,7 @@ opicones_aseguradora = {
     "ZURICH COLOMBIA SEGUROS S.A.": r'\bzurich\b'
 }
 
+# Metodo para identificar datos, busca en el texto ingresado si existe alguno de los patrones regex definidos
 def identificar_datos(texto):
   global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora, var_numeroRTM
 
@@ -216,7 +221,7 @@ def identificar_datos(texto):
     var_numeroSOAT = busqueda.group()
 
   # Aseguradora
-  for opcion, patron in opicones_aseguradora.items():
+  for opcion, patron in opciones_aseguradora.items():
     if re.search(patron, texto):
       var_aseguradora = opcion
 
@@ -383,9 +388,11 @@ def query_vehiculo():
     case "RTM":
       result = df[(df['Numero Certificado RTM'].str.upper() == var_numeroRTM.upper())]
 
+  # Si se encontró algún resultado, se genera el preview y/o el PDF
   if not result.empty:
     pdf = generate_pdf(result)
     return(pdf)
+  # Si no, se retorna el mensaje de error acorde a la consulta realizada
   else:
     match var_consultarPor:
       case "Placa y Propietario":
@@ -434,7 +441,6 @@ def generate_pdf(result):
 # ---------------------------------
 # Nueva consulta
 # ---------------------------------
-
 @app.post("/new")
 def read_root():
   global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM
