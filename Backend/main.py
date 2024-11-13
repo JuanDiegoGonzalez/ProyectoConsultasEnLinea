@@ -129,6 +129,7 @@ def make_predictions(input: DataModel):
 
 patron_VIN = r'\b[a-hj-npr-z0-9]{17}\b' # Para VIN alfanumérico de 17 caracteres
 patron_SOAT = r'\b\d{13}\b'  # Para SOAT de 13 dígitos
+patron_RTM = r'\b\d{8}\b'  # Para RTM de 8 dígitos
 patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
 patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
 patron_placa_carro = r'\b[a-z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
@@ -170,7 +171,7 @@ opicones_aseguradora = {
 }
 
 def identificar_datos(texto):
-  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora
+  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora, var_numeroRTM
 
   texto = unicodedata.normalize('NFD', texto)
   texto = texto.encode('ascii', 'ignore').decode('utf-8')
@@ -218,6 +219,11 @@ def identificar_datos(texto):
   for opcion, patron in opicones_aseguradora.items():
     if re.search(patron, texto):
       var_aseguradora = opcion
+
+  # RTM
+  busqueda = re.search(patron_RTM, texto)
+  if busqueda is not None:
+    var_numeroRTM = busqueda.group()
   
 # ---------------------------------
 # Método Consulta Persona
@@ -375,8 +381,7 @@ def query_vehiculo():
     case "Guía de movilidad":
       result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper())]
     case "RTM":
-      # TODO
-      ...
+      result = df[(df['Numero Certificado RTM'].str.upper() == var_numeroRTM.upper())]
 
   if not result.empty:
     pdf = generate_pdf(result)
