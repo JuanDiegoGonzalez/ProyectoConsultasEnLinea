@@ -148,10 +148,10 @@ opciones_tipo_documento = {
 opciones_consultar_por = {
     "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
     "VIN": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
-    "SOAT": r'\bsoat\b',
+    "SOAT": r'\bsoat\b|\bseguro\b|\bobligatorio\b|\baccidentes\b|\btransito\b',
     "PVO": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
     "Guía de movilidad": r'\bguia\b|\bmovilidad\b',
-    "RTM": r'\brtm\b'
+    "RTM": r'\brtm\b|\brevision\b|\btecnico\b|\bmecanica\b'
 }
 
 opicones_aseguradora = {
