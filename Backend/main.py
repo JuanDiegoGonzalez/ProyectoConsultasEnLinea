@@ -128,7 +128,7 @@ def make_predictions(input: DataModel):
 # ---------------------------------
 
 patron_VIN = r'\b[a-hj-npr-z0-9]{17}\b' # Para VIN alfanumérico de 17 caracteres
-patron_SOAT = r'\b\d{6}\b'  # Para SOAT de 6 dígitos
+patron_SOAT = r'\b\d{13}\b'  # Para SOAT de 13 dígitos
 patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
 patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
 patron_placa_carro = r'\b[a-z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
