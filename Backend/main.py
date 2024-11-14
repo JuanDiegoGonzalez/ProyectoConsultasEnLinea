@@ -59,7 +59,7 @@ var_tipoConsulta = ""
 
 # Consulta Persona
 var_tipoDocumento = ""
-var_numeroDocumento = "" # TODO
+var_numeroDocumento = ""
 
 # Consulta Vehículo
 var_procedencia = "Nacional" # Default
@@ -68,7 +68,7 @@ var_numeroPlaca = ""
 var_numeroVIN = ""
 var_numeroSOAT = ""
 var_aseguradora = ""
-var_numeroRTM = "" # TODO
+var_numeroRTM = ""
 
 # ---------------------------------
 # Hilo principal
