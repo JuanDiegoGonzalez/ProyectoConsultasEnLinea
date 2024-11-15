@@ -1,4 +1,9 @@
+import base64
+import datetime
+import os
+import uuid
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from joblib import load
 from DataModel import DataModel
@@ -348,9 +353,22 @@ def query_persona():
   result = df[(df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
               (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
 
+  # Si se encontró algún resultado, se genera el preview y/o el PDF
   if not result.empty:
-    pdf = generate_pdf(result)
-    return(pdf)
+    selected_columns = ["Nombre Completo", "Tipo_Documento_Propietario", "Numero_Documento_Propietario", "Estado Persona", "Fecha de Inscripcion"]
+    filtered_df = result.loc[:, selected_columns]
+    filtered_df.columns = ["Nombre Completo", "Tipo Documento", "Numero Documento", "Estado de la persona", "Fecha de inscripción"]
+
+    json_result = filtered_df.to_json(orient="records", date_format="iso", force_ascii=False)
+    pdf_file_path = generate_pdf(result)
+
+    response_data = {
+        "text": json_result[1: -1],
+        "pdf_url": pdf_file_path
+    }
+    
+    return JSONResponse(content=response_data)
+  # Si no, se retorna el mensaje de error acorde a la consulta realizada
   else:
     return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO. Datos consultados: tipo de documento " + var_tipoDocumento + " y número de documento " + var_numeroDocumento + ".")
 
@@ -390,8 +408,20 @@ def query_vehiculo():
 
   # Si se encontró algún resultado, se genera el preview y/o el PDF
   if not result.empty:
-    pdf = generate_pdf(result)
-    return(pdf)
+    selected_columns = ["Numero de placa", "Tipo_Servicio", "Clase Vehiculo"]
+    filtered_df = result.loc[:, selected_columns]
+    filtered_df.columns = ["PLACA DEL VEHÍCULO", "Tipo de servicio", "Clase de vehículo"]
+
+    json_result = filtered_df.to_json(orient="records", date_format="iso", force_ascii=False)
+    pdf_file_path = generate_pdf(result)
+
+    response_data = {
+        "text": json_result[1: -1],
+        "pdf_url": pdf_file_path
+    }
+    
+    return JSONResponse(content=response_data)
+
   # Si no, se retorna el mensaje de error acorde a la consulta realizada
   else:
     match var_consultarPor:
@@ -436,7 +466,19 @@ def generate_pdf(result):
   doc.build([table])
   buffer.seek(0)
 
-  return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": "attachment; filename=query_results.pdf"})
+  # Guarda el archivo en la carpeta /reports
+  timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+  unique_id = uuid.uuid4().hex
+  pdf_filename = f"generated_report_{timestamp}_{unique_id}.pdf"
+  pdf_file_path = f"./reports/{pdf_filename}"
+
+  if not os.path.exists("./reports"):
+      os.makedirs("./reports")
+
+  with open(pdf_file_path, 'wb') as f:
+      f.write(buffer.read())
+
+  return pdf_filename  # Return the file path or any confirmation as needed
 
 # ---------------------------------
 # Nueva consulta
@@ -446,3 +488,12 @@ def read_root():
   global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM
   
   var_tipoConsulta = ""
+
+# ---------------------------------
+# Descargar PDF
+# ---------------------------------
+@app.get("/reports/{filename}")
+def download_file(filename: str):
+  file_path = f"./reports/{filename}"
+  file = open(file_path, "rb")
+  return StreamingResponse(file, media_type="application/pdf")

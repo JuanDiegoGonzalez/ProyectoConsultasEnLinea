@@ -53,6 +53,36 @@
 	border-top-right-radius: 0;
 }
 
+.chatbot-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+}
+
+.chatbot-table th, .chatbot-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.chatbot-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.chatbot-table td {
+    background-color: #ffffff;
+}
+
+.chatbot-table tr:nth-child(even) td {
+    background-color: #f9f9f9;
+}
+
+.chatbot-table tr:hover td {
+    background-color: #f1f1f1;
+}
+
 .message.bot {
 	background-color: #e2e3e5;
 	align-self: flex-start;

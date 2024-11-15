@@ -39,16 +39,54 @@ function appendMessage(content, sender = 'user') {
    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// Funcion to append the preview to chat
+function appendPreview(parsedJson) {
+   // Create the table structure
+   const table = document.createElement('table');
+   table.classList.add('chatbot-table');  // Apply the CSS class
+
+   // Create the table header
+   const headerRow = document.createElement('tr');
+   for (const key in parsedJson) {
+      if (parsedJson.hasOwnProperty(key)) {
+         const headerCell = document.createElement('th');
+         headerCell.textContent = key;
+         headerRow.appendChild(headerCell);
+      }
+   }
+   table.appendChild(headerRow);
+
+   // Create the table rows for each value
+   const row = document.createElement('tr');
+   for (const key in parsedJson) {
+      if (parsedJson.hasOwnProperty(key)) {
+         const dataCell = document.createElement('td');
+         dataCell.textContent = parsedJson[key];
+         row.appendChild(dataCell);
+      }
+   }
+   table.appendChild(row);
+
+   // Append the table to the chatbot message
+   const tableMessage = document.createElement('div');
+   tableMessage.classList.add('message', 'bot');
+   tableMessage.appendChild(table);
+   
+   // Append the table message to the chatbot
+   document.getElementById('chatbot-messages').appendChild(tableMessage);
+
+   // Scroll to the bottom of the chat
+   const messagesContainer = document.getElementById('chatbot-messages');
+   messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
 // Send message functionality
 document.getElementById('send-button').onclick = async function () {
    const inputField = document.getElementById('chatbot-input');
    const message = inputField.value.trim();
 
    if (message) {
-      // Append the user's message to the chat
       appendMessage(message, 'user');
-
-      // Clear input field
       inputField.value = '';
 
       // Send the message to the backend
@@ -61,20 +99,53 @@ document.getElementById('send-button').onclick = async function () {
             body: JSON.stringify({texto: message}),
          });
          
-         const contentType = response.headers.get('Content-Type');
+         const data = await response.json();
 
-         if (contentType === 'application/pdf') {
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'response.pdf';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+         // Si la respuesta trae preview + url del PDF generado
+         if (data.text && data.pdf_url) {
+            // Append the text message
+            const parsedJson = JSON.parse(data.text);
+            appendPreview(parsedJson, 'bot');
+
+            // Notify the user with a message and download option
+            appendMessage('Haz click para descargar el reporte como PDF.', 'bot');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = '#';  // Placeholder URL for the click event
+            downloadLink.textContent = 'Descargar PDF';
+            downloadLink.style.color = '#007bff';
+            downloadLink.style.textDecoration = 'underline';
+        
+            // Add click event listener to fetch and download the PDF
+            downloadLink.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const filename = data.pdf_url;
+                
+                try {
+                    // Fetch the PDF from the backend
+                    const response = await fetch(`http://127.0.0.1:8000/reports/${filename}`);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Create a temporary link to trigger the download
+                        const tempLink = document.createElement('a');
+                        tempLink.href = url;
+                        tempLink.download = filename;
+                        tempLink.click();  // Trigger the download
+        
+                        // Revoke the object URL to free up resources
+                        URL.revokeObjectURL(url);
+                    } else {
+                        console.error('Failed to download the file:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error while downloading PDF:', error);
+                }
+            });
+            document.getElementById('chatbot-messages').appendChild(downloadLink);
          }
+         // Si no, es un mensaje normal, solamente lo agrega
          else {
-            const data = await response.json();
             appendMessage(data, 'bot');
          }
       } catch (error) {
