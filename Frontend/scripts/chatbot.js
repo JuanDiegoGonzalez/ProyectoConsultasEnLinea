@@ -1,4 +1,6 @@
+// ---------------------------------
 // Mostrar el chatbot y enviar mensaje de bienvenida después de 3 segundos
+// ---------------------------------
 window.onload = function () {
    setTimeout(function () {
       const content = document.getElementById('chatbot-content');
@@ -9,7 +11,9 @@ window.onload = function () {
    }, 1500); // 1500 ms = 1.5 segundos
 };
 
+// ---------------------------------
 // Toggle chatbot visibility when header is clicked
+// ---------------------------------
 document.getElementById('chatbot-header').onclick = function () {
    const content = document.getElementById('chatbot-content');
    if (content.style.display === 'none' || content.style.display === '') {
@@ -19,7 +23,9 @@ document.getElementById('chatbot-header').onclick = function () {
    }
 };
 
+// ---------------------------------
 // Function to append messages to chat
+// ---------------------------------
 function appendMessage(content, sender = 'user') {
    const messageElement = document.createElement('div');
    messageElement.textContent = sender === 'user' ? `Tú: ${content}` : `Sistema: ${content}`;
@@ -39,7 +45,9 @@ function appendMessage(content, sender = 'user') {
    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// ---------------------------------
 // Funcion to append the preview to chat
+// ---------------------------------
 function appendPreview(parsedJson) {
    // Create the table structure
    const table = document.createElement('table');
@@ -80,7 +88,9 @@ function appendPreview(parsedJson) {
    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// ---------------------------------
 // Send message functionality
+// ---------------------------------
 document.getElementById('send-button').onclick = async function () {
    const inputField = document.getElementById('chatbot-input');
    const message = inputField.value.trim();
@@ -157,7 +167,9 @@ document.getElementById('send-button').onclick = async function () {
    }
 };
 
+// ---------------------------------
 // Nueva consulta
+// ---------------------------------
 document.getElementById('new-button').onclick = async function () {
    try {
       const response = await fetch('http://127.0.0.1:8000/new', {
