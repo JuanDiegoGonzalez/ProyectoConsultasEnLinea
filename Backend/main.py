@@ -489,6 +489,19 @@ def read_root():
   
   var_tipoConsulta = ""
 
+  # Consulta Persona
+  var_tipoDocumento = ""
+  var_numeroDocumento = ""
+
+  # Consulta Vehículo
+  var_procedencia = "Nacional" # Default
+  var_consultarPor = ""
+  var_numeroPlaca = ""
+  var_numeroVIN = ""
+  var_numeroSOAT = ""
+  var_aseguradora = ""
+  var_numeroRTM = ""
+
 # ---------------------------------
 # Descargar PDF
 # ---------------------------------

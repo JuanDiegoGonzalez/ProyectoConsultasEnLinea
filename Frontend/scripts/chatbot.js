@@ -103,6 +103,8 @@ document.getElementById('send-button').onclick = async function () {
 
          // Si la respuesta trae preview + url del PDF generado
          if (data.text && data.pdf_url) {
+            appendMessage('Aquí tienes el resultado de la consulta:', 'bot');
+
             // Append the text message
             const parsedJson = JSON.parse(data.text);
             appendPreview(parsedJson, 'bot');
@@ -110,7 +112,7 @@ document.getElementById('send-button').onclick = async function () {
             // Notify the user with a message and download option
             appendMessage('Haz click para descargar el reporte como PDF.', 'bot');
             const downloadLink = document.createElement('a');
-            downloadLink.href = '#';  // Placeholder URL for the click event
+            downloadLink.href = '#';
             downloadLink.textContent = 'Descargar PDF';
             downloadLink.style.color = '#007bff';
             downloadLink.style.textDecoration = 'underline';
