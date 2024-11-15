@@ -12,7 +12,7 @@ window.onload = function () {
 };
 
 // ---------------------------------
-// Toggle chatbot visibility when header is clicked
+// Alternar la visibilidad del chatbot cuando se hace clic en el encabezado
 // ---------------------------------
 document.getElementById('chatbot-header').onclick = function () {
    const content = document.getElementById('chatbot-content');
@@ -24,7 +24,7 @@ document.getElementById('chatbot-header').onclick = function () {
 };
 
 // ---------------------------------
-// Function to append messages to chat
+// Funcion para agregar mensajes al chat
 // ---------------------------------
 function appendMessage(content, sender = 'user') {
    const messageElement = document.createElement('div');
@@ -38,22 +38,23 @@ function appendMessage(content, sender = 'user') {
       messageElement.classList.add('bot');
    }
 
+   // Agrega el mensaje al chat
    document.getElementById('chatbot-messages').appendChild(messageElement);
 
-   // Scroll automático hacia el final cuando se añaden nuevos mensajes
+   // Scroll automático hacia el final
    const messagesContainer = document.getElementById('chatbot-messages');
    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // ---------------------------------
-// Funcion to append the preview to chat
+// Funcion para agregar el preview al chat
 // ---------------------------------
 function appendPreview(parsedJson) {
-   // Create the table structure
+   // Crea la estructura de la tabla
    const table = document.createElement('table');
-   table.classList.add('chatbot-table');  // Apply the CSS class
+   table.classList.add('chatbot-table');
 
-   // Create the table header
+   // Crea el encabezado de la tabla
    const headerRow = document.createElement('tr');
    for (const key in parsedJson) {
       if (parsedJson.hasOwnProperty(key)) {
@@ -64,7 +65,7 @@ function appendPreview(parsedJson) {
    }
    table.appendChild(headerRow);
 
-   // Create the table rows for each value
+   // Crea las filas de la tabla
    const row = document.createElement('tr');
    for (const key in parsedJson) {
       if (parsedJson.hasOwnProperty(key)) {
@@ -75,21 +76,65 @@ function appendPreview(parsedJson) {
    }
    table.appendChild(row);
 
-   // Append the table to the chatbot message
+   // Agrega la tabla al mensaje
    const tableMessage = document.createElement('div');
    tableMessage.classList.add('message', 'bot');
    tableMessage.appendChild(table);
    
-   // Append the table message to the chatbot
+   // Agrega el preview al chat
    document.getElementById('chatbot-messages').appendChild(tableMessage);
 
-   // Scroll to the bottom of the chat
+   // Scroll automático hacia el final
    const messagesContainer = document.getElementById('chatbot-messages');
    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // ---------------------------------
-// Send message functionality
+// Funcion para agregar el link de descarga al chat
+// ---------------------------------
+function appendDownloadLink(url) {
+   const downloadLink = document.createElement('a');
+   downloadLink.href = '#';
+   downloadLink.textContent = 'Descargar PDF';
+   downloadLink.style.color = '#007bff';
+   downloadLink.style.textDecoration = 'underline';
+
+   // Agrega un event listener para descargar el PDF
+   downloadLink.addEventListener('click', async (event) => {
+       event.preventDefault();
+       const filename = url;
+       
+       try {
+           // Hace la petición del pdf al Backend
+           const response = await fetch(`http://127.0.0.1:8000/reports/${filename}`);
+           if (response.ok) {
+               const blob = await response.blob();
+               const url = URL.createObjectURL(blob);
+               
+               // Crea un link temporal para iniciar la descarga
+               const tempLink = document.createElement('a');
+               tempLink.href = url;
+               tempLink.download = filename;
+               tempLink.click();
+               URL.revokeObjectURL(url);
+           } else {
+               console.error('No se pudo descargar el archivo:', response.statusText);
+           }
+       } catch (error) {
+           console.error('Error al descargar el PDF:', error);
+       }
+   });
+
+   // Agrega el link al chat
+   document.getElementById('chatbot-messages').appendChild(downloadLink);
+
+   // Scroll automático hacia el final
+   const messagesContainer = document.getElementById('chatbot-messages');
+   messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// ---------------------------------
+// Envio del mensaje y manejo de la respuesta
 // ---------------------------------
 document.getElementById('send-button').onclick = async function () {
    const inputField = document.getElementById('chatbot-input');
@@ -99,7 +144,7 @@ document.getElementById('send-button').onclick = async function () {
       appendMessage(message, 'user');
       inputField.value = '';
 
-      // Send the message to the backend
+      // Envía el mensaje al Backend
       try {
          const response = await fetch('http://127.0.0.1:8000/talk', {
             method: 'POST',
@@ -115,46 +160,15 @@ document.getElementById('send-button').onclick = async function () {
          if (data.text && data.pdf_url) {
             appendMessage('Aquí tienes el resultado de la consulta:', 'bot');
 
-            // Append the text message
+            // Agrega el preview
             const parsedJson = JSON.parse(data.text);
-            appendPreview(parsedJson, 'bot');
+            appendPreview(parsedJson);
 
-            // Notify the user with a message and download option
+            // Notifica al usuario con la opcion para descargar el PDF
             appendMessage('Haz click para descargar el reporte como PDF.', 'bot');
-            const downloadLink = document.createElement('a');
-            downloadLink.href = '#';
-            downloadLink.textContent = 'Descargar PDF';
-            downloadLink.style.color = '#007bff';
-            downloadLink.style.textDecoration = 'underline';
-        
-            // Add click event listener to fetch and download the PDF
-            downloadLink.addEventListener('click', async (event) => {
-                event.preventDefault();
-                const filename = data.pdf_url;
-                
-                try {
-                    // Fetch the PDF from the backend
-                    const response = await fetch(`http://127.0.0.1:8000/reports/${filename}`);
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        
-                        // Create a temporary link to trigger the download
-                        const tempLink = document.createElement('a');
-                        tempLink.href = url;
-                        tempLink.download = filename;
-                        tempLink.click();  // Trigger the download
-        
-                        // Revoke the object URL to free up resources
-                        URL.revokeObjectURL(url);
-                    } else {
-                        console.error('Failed to download the file:', response.statusText);
-                    }
-                } catch (error) {
-                    console.error('Error while downloading PDF:', error);
-                }
-            });
-            document.getElementById('chatbot-messages').appendChild(downloadLink);
+            
+            // Agrega el link de descarga
+            appendDownloadLink(data.pdf_url, 'bot');
          }
          // Si no, es un mensaje normal, solamente lo agrega
          else {
@@ -162,7 +176,7 @@ document.getElementById('send-button').onclick = async function () {
          }
       } catch (error) {
          console.error('Error:', error);
-         appendMessage('Error: Failed to contact server', 'bot');
+         appendMessage('Error: No se pudo contactar al servidor', 'bot');
       }
    }
 };
@@ -181,6 +195,6 @@ document.getElementById('new-button').onclick = async function () {
       appendMessage('Hola! ¿En qué puedo ayudarte hoy?', 'bot');
    } catch (error) {
       console.error('Error:', error);
-      appendMessage('Error: Failed to contact server', 'bot');
+      appendMessage('Error: No se pudo contactar al servidor', 'bot');
    }
 };

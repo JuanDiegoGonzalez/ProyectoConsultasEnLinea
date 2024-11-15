@@ -1,4 +1,3 @@
-import base64
 import datetime
 import os
 import uuid
@@ -30,7 +29,7 @@ model = load("assets/trained_bert_model.joblib")
 
 data = pd.read_excel('assets/Datos de entrenamiento.xlsx')
 labels = data['Intención'].tolist()
-label_mapping = list(set(labels))  # Unique label names from the training dataset
+label_mapping = list(set(labels))  # Nombres de las clases del conjunto de datos de entrenamiento
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -67,7 +66,7 @@ var_tipoDocumento = ""
 var_numeroDocumento = ""
 
 # Consulta Vehículo
-var_procedencia = "Nacional" # Default
+var_procedencia = "Nacional" # Por defecto
 var_consultarPor = ""
 var_numeroPlaca = ""
 var_numeroVIN = ""
@@ -388,8 +387,6 @@ def query_vehiculo():
   excel_file = 'data/Datos_Dummy_Vehiculos.xlsx'
   df = pd.read_excel(excel_file, dtype=str)
 
-  print(var_numeroPlaca, var_tipoDocumento, var_numeroDocumento)
-
   match var_consultarPor:
     case "Placa y Propietario":
       result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper()) & 
@@ -478,7 +475,7 @@ def generate_pdf(result):
   with open(pdf_file_path, 'wb') as f:
       f.write(buffer.read())
 
-  return pdf_filename  # Return the file path or any confirmation as needed
+  return pdf_filename  # Devuelve la ruta del PDF generado
 
 # ---------------------------------
 # Nueva consulta
@@ -494,7 +491,7 @@ def read_root():
   var_numeroDocumento = ""
 
   # Consulta Vehículo
-  var_procedencia = "Nacional" # Default
+  var_procedencia = "Nacional" # Por defecto
   var_consultarPor = ""
   var_numeroPlaca = ""
   var_numeroVIN = ""
