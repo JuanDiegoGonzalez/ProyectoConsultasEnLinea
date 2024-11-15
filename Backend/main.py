@@ -1,4 +1,8 @@
+import datetime
+import os
+import uuid
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from joblib import load
 from DataModel import DataModel
@@ -9,7 +13,7 @@ import unicodedata
 import torch
 import pandas as pd
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -25,7 +29,7 @@ model = load("assets/trained_bert_model.joblib")
 
 data = pd.read_excel('assets/Datos de entrenamiento.xlsx')
 labels = data['Intención'].tolist()
-label_mapping = list(set(labels))  # Unique label names from the training dataset
+label_mapping = list(set(labels))  # Nombres de las clases del conjunto de datos de entrenamiento
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -59,16 +63,16 @@ var_tipoConsulta = ""
 
 # Consulta Persona
 var_tipoDocumento = ""
-var_numeroDocumento = "" # TODO
+var_numeroDocumento = ""
 
 # Consulta Vehículo
-var_procedencia = "Nacional" # Default
+var_procedencia = "Nacional" # Por defecto
 var_consultarPor = ""
 var_numeroPlaca = ""
-var_numeroVIN = "" # TODO
-var_numeroSOAT = "" # TODO
-var_aseguradora = "" ###
-var_numeroRTM = "" # TODO
+var_numeroVIN = ""
+var_numeroSOAT = ""
+var_aseguradora = ""
+var_numeroRTM = ""
 
 # ---------------------------------
 # Hilo principal
@@ -93,21 +97,21 @@ def talk(input: DataModel):
 def make_predictions(input: DataModel):
     global var_tipoConsulta
 
-  # Tokenize new input texts for prediction
+    # Tokenizar los textos de entrada para hacer la predicción
     new_texts = [input.texto]
     new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
 
-    # Make predictions
+    # Hacer las predicciones
     with torch.no_grad():
         outputs = model(**new_encodings)
 
-    # Get the predicted labels
+    # Obtener las clases predichas
     predictions = outputs.logits.argmax(dim=-1)
 
-    # Map predictions to label names
+    # Mapear las predicciones a los nombres de las clases (Consulta vehículo, consulta persona, otra consulta)
     predicted_labels = [label_mapping[pred] for pred in predictions.tolist()]
 
-    # Print the predicted label for each input text
+    # Asignar el tipo de consulta a la variable correspondiente y llamar la funcion que realiza esa consulta
     for i, text in enumerate(new_texts):
         result = predicted_labels[i]
 
@@ -127,12 +131,16 @@ def make_predictions(input: DataModel):
 # Método para identificar datos
 # ---------------------------------
 
-patron_VIN_SOAT = r'\b\d{6}\b'  # Para VIN, SOAT de 6 dígitos
+# Patrones regex para los datos alfanuméricos
+patron_VIN = r'\b[a-hj-npr-z0-9]{17}\b' # Para VIN alfanumérico de 17 caracteres
+patron_SOAT = r'\b\d{13}\b'  # Para SOAT de 13 dígitos
+patron_RTM = r'\b\d{8}\b'  # Para RTM de 8 dígitos
 patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
 patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
 patron_placa_carro = r'\b[a-z]{3}\d{3}\b'  # Para placas con 3 letras y 3 dígitos
 patron_placa_moto = r'\b[a-z]{3}\d{2}[a-z]\b'  # Para placas con 3 letras, 2 dígitos y una letra al final
 
+# Opciones del tipo de documento
 opciones_tipo_documento = {
     "Carnet Diplomático": r'\bcarnet\b|\bdiplomatico\b',
     "Cédula de Ciudadanía": r'\bcedula\b|\bciudadania\b',
@@ -143,16 +151,18 @@ opciones_tipo_documento = {
     "Tarjeta de Identidad": r'\btarjeta\b|\bidentidad\b'
 }
 
+# Opciones de consulta para la consulta de vehículos
 opciones_consultar_por = {
     "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
-    "VIN (Número único de identificación)": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
-    "SOAT": r'\bsoat\b',
-    "PVO (Planilla de viaje ocasional)": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
+    "VIN": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
+    "SOAT": r'\bsoat\b|\bseguro\b|\bobligatorio\b|\baccidentes\b|\btransito\b',
+    "PVO": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
     "Guía de movilidad": r'\bguia\b|\bmovilidad\b',
-    "RTM": r'\brtm\b'
+    "RTM": r'\brtm\b|\brevision\b|\btecnico\b|\bmecanica\b'
 }
 
-opicones_aseguradora = {
+# Opciones de aseguradoras para la consulta de vehículos por SOAT
+opciones_aseguradora = {
     "ALLIANZ SEGUROS S.A.": r'\ballianz\b',
     "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\bsolidaria\b|\bcooperativa\b|\bcolombia\b|\bentidad\b',
     "AXA COLPATRIA SEGUROS SA": r'\baxa\b|\bcolpatria\b',
@@ -168,8 +178,9 @@ opicones_aseguradora = {
     "ZURICH COLOMBIA SEGUROS S.A.": r'\bzurich\b'
 }
 
+# Metodo para identificar datos, busca en el texto ingresado si existe alguno de los patrones regex definidos
 def identificar_datos(texto):
-  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora
+  global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora, var_numeroRTM
 
   texto = unicodedata.normalize('NFD', texto)
   texto = texto.encode('ascii', 'ignore').decode('utf-8')
@@ -203,16 +214,25 @@ def identificar_datos(texto):
   if busqueda is not None:
     var_numeroPlaca = busqueda.group()
 
-  # VIN y SOAT
-  busqueda = re.search(patron_VIN_SOAT, texto)
+  # VIN
+  busqueda = re.search(patron_VIN, texto)
   if busqueda is not None:
     var_numeroVIN = busqueda.group()
+
+  # SOAT
+  busqueda = re.search(patron_SOAT, texto)
+  if busqueda is not None:
     var_numeroSOAT = busqueda.group()
 
   # Aseguradora
-  for opcion, patron in opicones_aseguradora.items():
+  for opcion, patron in opciones_aseguradora.items():
     if re.search(patron, texto):
       var_aseguradora = opcion
+
+  # RTM
+  busqueda = re.search(patron_RTM, texto)
+  if busqueda is not None:
+    var_numeroRTM = busqueda.group()
   
 # ---------------------------------
 # Método Consulta Persona
@@ -271,7 +291,7 @@ def consulta_vehiculo():
         return query_vehiculo()
 
     case "VIN":
-      if var_numeroPlaca == "":
+      if var_numeroVIN == "":
         respuesta = "Indica el número VIN del vehículo"
         return(f"{respuesta}\n")
       
@@ -319,7 +339,7 @@ def consulta_vehiculo():
         return query_vehiculo()
 
     case _:
-      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTMN"
+      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTM"
       return(f"{respuesta}\n")
 
 # ---------------------------------
@@ -332,9 +352,22 @@ def query_persona():
   result = df[(df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
               (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
 
+  # Si se encontró algún resultado, se genera el preview y/o el PDF
   if not result.empty:
-    pdf = generate_pdf(result)
-    return(pdf)
+    selected_columns = ["Nombre Completo", "Tipo_Documento_Propietario", "Numero_Documento_Propietario", "Estado Persona", "Fecha de Inscripcion"]
+    filtered_df = result.loc[:, selected_columns]
+    filtered_df.columns = ["Nombre Completo", "Tipo Documento", "Numero Documento", "Estado de la persona", "Fecha de inscripción"]
+
+    json_result = filtered_df.to_json(orient="records", date_format="iso", force_ascii=False)
+    pdf_file_path = generate_pdf(result)
+
+    response_data = {
+        "text": json_result[1: -1],
+        "pdf_url": pdf_file_path
+    }
+    
+    return JSONResponse(content=response_data)
+  # Si no, se retorna el mensaje de error acorde a la consulta realizada
   else:
     return("No se ha encontrado la persona en estado ACTIVA o SIN REGISTRO. Datos consultados: tipo de documento " + var_tipoDocumento + " y número de documento " + var_numeroDocumento + ".")
 
@@ -343,9 +376,9 @@ def query_persona():
 # ---------------------------------
 respuestas_error_vehiculos = {
     "Placa y Propietario": "Los datos registrados no corresponden con los propietarios activos para el vehículo consultado.",
-    "VIN (Número único de identificación)": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
+    "VIN": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "SOAT": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
-    "PVO (Planilla de viaje ocasional)": "Señor Usuario no existe información de PVO para el vehículo consultado.",
+    "PVO": "Señor Usuario no existe información de PVO para el vehículo consultado.",
     "Guía de movilidad": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT.",
     "RTM": "Señor Usuario, para el vehículo consultado no hay información registrada en el sistema RUNT."
 }
@@ -354,42 +387,53 @@ def query_vehiculo():
   excel_file = 'data/Datos_Dummy_Vehiculos.xlsx'
   df = pd.read_excel(excel_file, dtype=str)
 
-  print(var_numeroPlaca, var_tipoDocumento, var_numeroDocumento)
-
   match var_consultarPor:
     case "Placa y Propietario":
-      result = df[(df['Numero de placa'] == var_numeroPlaca.upper()) & 
-                  (df['Tipo_Documento_Propietario'] == var_tipoDocumento) & 
-                  (df['Numero_Documento_Propietario'] == var_numeroDocumento)]
-    case "VIN (Número único de identificación)":
-      result = df[(df['Numero de VIN'] == var_numeroVIN)]
+      result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper()) & 
+                  (df['Tipo_Documento_Propietario'].str.upper() == var_tipoDocumento.upper()) & 
+                  (df['Numero_Documento_Propietario'].str.upper() == var_numeroDocumento.upper())]
+    case "VIN":
+      result = df[(df['Numero de VIN'].str.upper() == var_numeroVIN.upper())]
     case "SOAT":
-      result = df[(df['Poliza Soat'] == var_numeroSOAT)]
-    case "PVO (Planilla de viaje ocasional)":
-      result = df[(df['Numero de placa'] == var_numeroPlaca)]
+      result = df[(df['Poliza Soat'].str.upper() == var_numeroSOAT.upper())]
+    case "PVO":
+      result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper())]
     case "Guía de movilidad":
-      result = df[(df['Numero de placa'] == var_numeroPlaca)]
+      result = df[(df['Numero de placa'].str.upper() == var_numeroPlaca.upper())]
     case "RTM":
-      # TODO
-      ...
+      result = df[(df['Numero Certificado RTM'].str.upper() == var_numeroRTM.upper())]
 
+  # Si se encontró algún resultado, se genera el preview y/o el PDF
   if not result.empty:
-    pdf = generate_pdf(result)
-    return(pdf)
+    selected_columns = ["Numero de placa", "Tipo_Servicio", "Clase Vehiculo"]
+    filtered_df = result.loc[:, selected_columns]
+    filtered_df.columns = ["PLACA DEL VEHÍCULO", "Tipo de servicio", "Clase de vehículo"]
+
+    json_result = filtered_df.to_json(orient="records", date_format="iso", force_ascii=False)
+    pdf_file_path = generate_pdf(result)
+
+    response_data = {
+        "text": json_result[1: -1],
+        "pdf_url": pdf_file_path
+    }
+    
+    return JSONResponse(content=response_data)
+
+  # Si no, se retorna el mensaje de error acorde a la consulta realizada
   else:
     match var_consultarPor:
       case "Placa y Propietario":
-        return(respuestas_error_vehiculos["Placa y Propietario"] + " Datos consultados: placa " + var_numeroPlaca + ", tipo de documento " + var_tipoDocumento + " y número de documento " + var_numeroDocumento + ".")
-      case "VIN (Número único de identificación)":
-        return(respuestas_error_vehiculos["VIN (Número único de identificación)"] + " Datos consultados: VIN " + var_numeroVIN + ".")
+        return(respuestas_error_vehiculos["Placa y Propietario"] + " Datos consultados: placa " + var_numeroPlaca.upper() + ", tipo de documento " + var_tipoDocumento.upper() + " y número de documento " + var_numeroDocumento.upper() + ".")
+      case "VIN":
+        return(respuestas_error_vehiculos["VIN"] + " Datos consultados: VIN " + var_numeroVIN.upper() + ".")
       case "SOAT":
-        return(respuestas_error_vehiculos["SOAT"] + " Datos consultados: SOAT " + var_numeroSOAT + ".")
-      case "PVO (Planilla de viaje ocasional)":
-        return(respuestas_error_vehiculos["PVO (Planilla de viaje ocasional)"] + " Datos consultados: placa " + var_numeroPlaca + ".")
+        return(respuestas_error_vehiculos["SOAT"] + " Datos consultados: SOAT " + var_numeroSOAT.upper() + ".")
+      case "PVO":
+        return(respuestas_error_vehiculos["PVO"] + " Datos consultados: placa " + var_numeroPlaca.upper() + ".")
       case "Guía de movilidad":
-        return(respuestas_error_vehiculos["Guía de movilidad"] + " Datos consultados: placa " + var_numeroPlaca + ".")
+        return(respuestas_error_vehiculos["Guía de movilidad"] + " Datos consultados: placa " + var_numeroPlaca.upper() + ".")
       case "RTM":
-        return(respuestas_error_vehiculos["RTM"] + " Datos consultados: RTM " + var_numeroRTM + ".")
+        return(respuestas_error_vehiculos["RTM"] + " Datos consultados: RTM " + var_numeroRTM.upper() + ".")
 
 # ---------------------------------
 # Generador de PDF
@@ -419,14 +463,47 @@ def generate_pdf(result):
   doc.build([table])
   buffer.seek(0)
 
-  return StreamingResponse(buffer, media_type='application/pdf', headers={"Content-Disposition": "attachment; filename=query_results.pdf"})
+  # Guarda el archivo en la carpeta /reports
+  timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+  unique_id = uuid.uuid4().hex
+  pdf_filename = f"generated_report_{timestamp}_{unique_id}.pdf"
+  pdf_file_path = f"./reports/{pdf_filename}"
+
+  if not os.path.exists("./reports"):
+      os.makedirs("./reports")
+
+  with open(pdf_file_path, 'wb') as f:
+      f.write(buffer.read())
+
+  return pdf_filename  # Devuelve la ruta del PDF generado
 
 # ---------------------------------
 # Nueva consulta
 # ---------------------------------
-
 @app.post("/new")
 def read_root():
   global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM
   
   var_tipoConsulta = ""
+
+  # Consulta Persona
+  var_tipoDocumento = ""
+  var_numeroDocumento = ""
+
+  # Consulta Vehículo
+  var_procedencia = "Nacional" # Por defecto
+  var_consultarPor = ""
+  var_numeroPlaca = ""
+  var_numeroVIN = ""
+  var_numeroSOAT = ""
+  var_aseguradora = ""
+  var_numeroRTM = ""
+
+# ---------------------------------
+# Descargar PDF
+# ---------------------------------
+@app.get("/reports/{filename}")
+def download_file(filename: str):
+  file_path = f"./reports/{filename}"
+  file = open(file_path, "rb")
+  return StreamingResponse(file, media_type="application/pdf")

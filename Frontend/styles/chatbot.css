@@ -1,15 +1,14 @@
 #chatbot-container {
-	position: fixed;
-	bottom: 20px;
-	left: 20px;
-	width: 300px;
-	background-color: #f9f9f9;
-	border: 2px solid #ccc;
-	border-radius: 10px;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	font-family: 'Segoe UI', sans-serif;
-	transition: all 0.3s ease;
+    width: 100%;
+    background-color: #f9f9f9;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+    transition: all 0.3s ease;
+    margin: 20px auto;
 }
+
 
 #chatbot-header {
 	background: linear-gradient(45deg, #007bff, #0056b3);
@@ -19,7 +18,7 @@
 	border-top-right-radius: 10px;
 	cursor: pointer;
 	text-align: center;
-	font-size: 1.1em;
+    font-weight: bold;
 }
 
 #chatbot-content {
@@ -29,7 +28,7 @@
 }
 
 #chatbot-messages {
-	height: 250px;
+	height: 400px;
 	overflow-y: auto;
 	border-bottom: 1px solid #ddd;
 	margin-bottom: 10px;
@@ -54,6 +53,36 @@
 	border-top-right-radius: 0;
 }
 
+.chatbot-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+}
+
+.chatbot-table th, .chatbot-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.chatbot-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.chatbot-table td {
+    background-color: #ffffff;
+}
+
+.chatbot-table tr:nth-child(even) td {
+    background-color: #f9f9f9;
+}
+
+.chatbot-table tr:hover td {
+    background-color: #f1f1f1;
+}
+
 .message.bot {
 	background-color: #e2e3e5;
 	align-self: flex-start;
@@ -67,7 +96,6 @@
 	border: 1px solid #ddd;
 	border-radius: 5px;
 	margin-right: 5px;
-	font-size: 1em;
 }
 
 #send-button {
