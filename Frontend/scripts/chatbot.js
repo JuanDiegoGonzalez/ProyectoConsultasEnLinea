@@ -1,4 +1,9 @@
 // ---------------------------------
+// URL del Backend
+// ---------------------------------
+const apiBaseUrl = "http://127.0.0.1:8000";
+
+// ---------------------------------
 // Mostrar el chatbot y enviar mensaje de bienvenida después de 3 segundos
 // ---------------------------------
 window.onload = function () {
@@ -7,8 +12,8 @@ window.onload = function () {
       content.style.display = 'block'; // Mostrar el contenido del chatbot
 
       // Mensaje de bienvenida al usuario
-      appendMessage('Hola! ¿En qué puedo ayudarte hoy?', 'bot');
    }, 1500); // 1500 ms = 1.5 segundos
+   restartVariables()
 };
 
 // ---------------------------------
@@ -106,7 +111,7 @@ function appendDownloadLink(url) {
        
        try {
            // Hace la petición del pdf al Backend
-           const response = await fetch(`http://127.0.0.1:8000/reports/${filename}`);
+           const response = await fetch(`${apiBaseUrl}/reports/${filename}`);
            if (response.ok) {
                const blob = await response.blob();
                const url = URL.createObjectURL(blob);
@@ -146,7 +151,7 @@ document.getElementById('send-button').onclick = async function () {
 
       // Envía el mensaje al Backend
       try {
-         const response = await fetch('http://127.0.0.1:8000/talk', {
+         const response = await fetch(`${apiBaseUrl}/talk`, {
             method: 'POST',
             headers: {
                'Content-Type': 'application/json',
@@ -184,9 +189,9 @@ document.getElementById('send-button').onclick = async function () {
 // ---------------------------------
 // Nueva consulta
 // ---------------------------------
-document.getElementById('new-button').onclick = async function () {
+async function restartVariables() {
    try {
-      const response = await fetch('http://127.0.0.1:8000/new', {
+      const response = await fetch(`${apiBaseUrl}/new`, {
          method: 'POST',
          headers: {
             'Content-Type': 'application/json',
@@ -197,4 +202,8 @@ document.getElementById('new-button').onclick = async function () {
       console.error('Error:', error);
       appendMessage('Error: No se pudo contactar al servidor', 'bot');
    }
+}
+
+document.getElementById('new-button').onclick = async function () {
+   restartVariables()
 };
