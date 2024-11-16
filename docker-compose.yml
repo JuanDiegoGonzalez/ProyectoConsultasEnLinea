@@ -3,7 +3,7 @@ version: "3.10"
 services:
   frontend:
     build:
-      context: ./frontend
+      context: ./Frontend
     ports:
       - "80:80"
     depends_on:
@@ -13,7 +13,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./Backend
     ports:
       - "8000:8000"
     networks:
