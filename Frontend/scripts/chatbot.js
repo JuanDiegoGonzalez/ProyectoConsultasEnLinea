@@ -7,8 +7,8 @@ window.onload = function () {
       content.style.display = 'block'; // Mostrar el contenido del chatbot
 
       // Mensaje de bienvenida al usuario
-      appendMessage('Hola! ¿En qué puedo ayudarte hoy?', 'bot');
    }, 1500); // 1500 ms = 1.5 segundos
+   restartVariables()
 };
 
 // ---------------------------------
@@ -184,7 +184,7 @@ document.getElementById('send-button').onclick = async function () {
 // ---------------------------------
 // Nueva consulta
 // ---------------------------------
-document.getElementById('new-button').onclick = async function () {
+async function restartVariables() {
    try {
       const response = await fetch('http://127.0.0.1:8000/new', {
          method: 'POST',
@@ -197,4 +197,8 @@ document.getElementById('new-button').onclick = async function () {
       console.error('Error:', error);
       appendMessage('Error: No se pudo contactar al servidor', 'bot');
    }
+}
+
+document.getElementById('new-button').onclick = async function () {
+   restartVariables()
 };
