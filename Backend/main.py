@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Spacer
 from io import BytesIO
 
 # ---------------------------------
@@ -445,6 +445,15 @@ def generate_pdf(result):
   buffer = BytesIO()
   doc = SimpleDocTemplate(buffer, pagesize=letter)
 
+  # Cargar la imagen del logo
+  logo = Image("./assets/logo_mintransporte.png", width=181, height=109)  # Ajusta el tamaño según sea necesario
+
+  # Configurar la posición de la imagen (en la parte superior central)
+  logo.hAlign = 'CENTER'
+  logo.vAlign = 'TOP'
+
+  space_between_logo_and_table = Spacer(1, 20)
+
   data = [['Campo', 'Valor']]
   for column in result.columns:
       for value in result[column]:
@@ -453,17 +462,28 @@ def generate_pdf(result):
   table = Table(data)
 
   style = TableStyle([
-      ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+      ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#f57338")),
       ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-      ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+      ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
       ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-      ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-      ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+      ('FONTSIZE', (0, 0), (-1, 0), 14),
+      ('BOTTOMPADDING', (0, 0), (-1, 0), 9),
+      ('TOPPADDING', (0, 0), (-1, 0), 3),
+      #('BACKGROUND', (0, 1), (-1, -1), colors.white),
       ('GRID', (0, 0), (-1, -1), 1, colors.black),
   ])
+
+  num_rows = len(data)
+  # Aplica colores alternados dinámicamente
+  for i in range(1, num_rows):  # Empieza en 1 para saltarse el encabezado
+      if i % 2 == 1:
+          style.add('BACKGROUND', (0, i), (-1, i), colors.HexColor("#FBE4D5"))
+      else:
+          style.add('BACKGROUND', (0, i), (-1, i), colors.white)
+
   table.setStyle(style)
 
-  doc.build([table])
+  doc.build([logo, space_between_logo_and_table, table])
   buffer.seek(0)
 
   # Guarda el archivo en la carpeta /reports
