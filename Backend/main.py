@@ -98,6 +98,9 @@ def make_predictions(input: DataModel):
     global var_tipoConsulta
 
     # Tokenizar los textos de entrada para hacer la predicción
+    if (len(input.texto.split(" ")) <3):
+      return("¿Qué consulta te gustaría realizar?")
+
     new_texts = [input.texto]
     new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
 
@@ -142,38 +145,37 @@ patron_placa_moto = r'\b[a-z]{3}\d{2}[a-z]\b'  # Para placas con 3 letras, 2 dí
 
 # Opciones del tipo de documento
 opciones_tipo_documento = {
-    "Carnet Diplomático": r'\bcarnet\b|\bdiplomatico\b',
-    "Cédula de Ciudadanía": r'\bcedula\b|\bciudadania\b',
+    "Carnet Diplomático": r'\bcarnet diplomatico\b',
+    "Cédula de Ciudadanía": r'\bcedula\b|(?:^|\s)cc(?:\s|$)',
     "Cédula de Extranjería": r'\bextranjeria\b',
-    "Pasaporte": r'\bpasaporte\b',
-    "Permiso por Protección Temporal": r'\bpermiso\b|\bproteccion\b|\btemporal\b',
-    "Registro Civil": r'\bregistro\b|\bcivil\b',
-    "Tarjeta de Identidad": r'\btarjeta\b|\bidentidad\b'
+    "Pasaporte": r'\bpasaporte\b|\bpassport\b',
+    "Permiso por Protección Temporal": r'\bpermiso por proteccion temporal\b',
+    "Registro Civil": r'\bregistro civil\b',
+    "Tarjeta de Identidad": r'\btarjeta de identidad\b|(?:^|\s)ti(?:\s|$)'
 }
 
 # Opciones de consulta para la consulta de vehículos
 opciones_consultar_por = {
     "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
-    "VIN": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
-    "SOAT": r'\bsoat\b|\bseguro\b|\bobligatorio\b|\baccidentes\b|\btransito\b',
-    "PVO": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
-    "Guía de movilidad": r'\bguia\b|\bmovilidad\b',
-    "RTM": r'\brtm\b|\brevision\b|\btecnico\b|\bmecanica\b'
+    "VIN": r'\bvin\b|\bnumero unico de identificacion\b',
+    "PVO": r'\bpvo\b|\bplanilla de viaje ocasional\b',
+    "Guía de movilidad": r'\bguia de movilidad\b',
+    "RTM": r'\brtm\b|\brevision tecnico mecanica\b'
 }
 
 # Opciones de aseguradoras para la consulta de vehículos por SOAT
 opciones_aseguradora = {
     "ALLIANZ SEGUROS S.A.": r'\ballianz\b',
-    "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\bsolidaria\b|\bcooperativa\b|\bcolombia\b|\bentidad\b',
+    "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\baseguradora solidaria\b|\bsolidaria de colombia\b',
     "AXA COLPATRIA SEGUROS SA": r'\baxa\b|\bcolpatria\b',
     "CARDIF COLOMBIA SEGUROS GENERALES SA": r'\bcardif\b',
-    "COMPAÑIA MUNDIAL DE SEGUROS SA": r'\bmundial\b',
+    "COMPAÑIA MUNDIAL DE SEGUROS SA": r'\bcompañia mundial de seguros\b',
     "HDI SEGUROS COLOMBIA S.A.": r'\bhdi\b',
-    "LA EQUIDAD SEGUROS GENERALES ORGANISMO COOPERATIVO": r'\bequidad\b|\bcooperativo\b',
-    "LA PREVISORA S.A. COMPAÑIA DE SEGUROS": r'\bprevisora\b',
+    "LA EQUIDAD SEGUROS GENERALES ORGANISMO COOPERATIVO": r'\bequidad\b',
+    "LA PREVISORA S.A. COMPAÑIA DE SEGUROS": r'\bla previsora\b',
     "MAPFRE SEGUROS GENERALES DE COLOMBIA S.A.": r'\bmapfre\b',
-    "SEGUROS COMERCIALES BOLIVAR S.A": r'\bbolivar\b|\bcomerciales\b',
-    "SEGUROS DEL ESTADO S.A.": r'\bestado\b',
+    "SEGUROS COMERCIALES BOLIVAR S.A": r'\bseguros bolivar\b',
+    "SEGUROS DEL ESTADO S.A.": r'\bseguros del estado\b',
     "SEGUROS GENERALES SURAMERICANA S.A.": r'\bsuramericana\b',
     "ZURICH COLOMBIA SEGUROS S.A.": r'\bzurich\b'
 }
@@ -185,6 +187,7 @@ def identificar_datos(texto):
   texto = unicodedata.normalize('NFD', texto)
   texto = texto.encode('ascii', 'ignore').decode('utf-8')
   texto = texto.lower()
+  texto = re.sub(r'[^a-z0-9\s]', '', texto)
 
   # Tipo Documento
   for opcion, patron in opciones_tipo_documento.items():
@@ -339,7 +342,7 @@ def consulta_vehiculo():
         return query_vehiculo()
 
     case _:
-      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTM"
+      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, Número VIN, o Número RTM"
       return(f"{respuesta}\n")
 
 # ---------------------------------
