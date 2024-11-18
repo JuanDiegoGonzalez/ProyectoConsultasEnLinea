@@ -469,7 +469,6 @@ def generate_pdf(result):
       ('FONTSIZE', (0, 0), (-1, 0), 14),
       ('BOTTOMPADDING', (0, 0), (-1, 0), 9),
       ('TOPPADDING', (0, 0), (-1, 0), 3),
-      #('BACKGROUND', (0, 1), (-1, -1), colors.white),
       ('GRID', (0, 0), (-1, -1), 1, colors.black),
   ])
 
