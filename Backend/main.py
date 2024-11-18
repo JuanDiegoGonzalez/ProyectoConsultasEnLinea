@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Spacer
 from io import BytesIO
 
 # ---------------------------------
@@ -98,6 +98,9 @@ def make_predictions(input: DataModel):
     global var_tipoConsulta
 
     # Tokenizar los textos de entrada para hacer la predicción
+    if (len(input.texto.split(" ")) <3):
+      return("¿Qué consulta te gustaría realizar?")
+
     new_texts = [input.texto]
     new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
 
@@ -142,38 +145,37 @@ patron_placa_moto = r'\b[a-z]{3}\d{2}[a-z]\b'  # Para placas con 3 letras, 2 dí
 
 # Opciones del tipo de documento
 opciones_tipo_documento = {
-    "Carnet Diplomático": r'\bcarnet\b|\bdiplomatico\b',
-    "Cédula de Ciudadanía": r'\bcedula\b|\bciudadania\b',
+    "Carnet Diplomático": r'\bcarnet diplomatico\b',
+    "Cédula de Ciudadanía": r'\bcedula\b|(?:^|\s)cc(?:\s|$)',
     "Cédula de Extranjería": r'\bextranjeria\b',
-    "Pasaporte": r'\bpasaporte\b',
-    "Permiso por Protección Temporal": r'\bpermiso\b|\bproteccion\b|\btemporal\b',
-    "Registro Civil": r'\bregistro\b|\bcivil\b',
-    "Tarjeta de Identidad": r'\btarjeta\b|\bidentidad\b'
+    "Pasaporte": r'\bpasaporte\b|\bpassport\b',
+    "Permiso por Protección Temporal": r'\bpermiso por proteccion temporal\b',
+    "Registro Civil": r'\bregistro civil\b',
+    "Tarjeta de Identidad": r'\btarjeta de identidad\b|(?:^|\s)ti(?:\s|$)'
 }
 
 # Opciones de consulta para la consulta de vehículos
 opciones_consultar_por = {
     "Placa y Propietario": r'\bplaca\b|\bpropietario\b',
-    "VIN": r'\bvin\b|\bnumero\b|\bunico\b|\bindentificacion\b',
-    "SOAT": r'\bsoat\b|\bseguro\b|\bobligatorio\b|\baccidentes\b|\btransito\b',
-    "PVO": r'\bpvo\b|\bplanilla\b|\bviaje\b|\bocasional\b',
-    "Guía de movilidad": r'\bguia\b|\bmovilidad\b',
-    "RTM": r'\brtm\b|\brevision\b|\btecnico\b|\bmecanica\b'
+    "VIN": r'\bvin\b|\bnumero unico de identificacion\b',
+    "PVO": r'\bpvo\b|\bplanilla de viaje ocasional\b',
+    "Guía de movilidad": r'\bguia de movilidad\b',
+    "RTM": r'\brtm\b|\brevision tecnico mecanica\b'
 }
 
 # Opciones de aseguradoras para la consulta de vehículos por SOAT
 opciones_aseguradora = {
     "ALLIANZ SEGUROS S.A.": r'\ballianz\b',
-    "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\bsolidaria\b|\bcooperativa\b|\bcolombia\b|\bentidad\b',
+    "ASEGURADORA SOLIDARIA DE COLOMBIA ENTIDAD COOPERATIVA": r'\baseguradora solidaria\b|\bsolidaria de colombia\b',
     "AXA COLPATRIA SEGUROS SA": r'\baxa\b|\bcolpatria\b',
     "CARDIF COLOMBIA SEGUROS GENERALES SA": r'\bcardif\b',
-    "COMPAÑIA MUNDIAL DE SEGUROS SA": r'\bmundial\b',
+    "COMPAÑIA MUNDIAL DE SEGUROS SA": r'\bcompañia mundial de seguros\b',
     "HDI SEGUROS COLOMBIA S.A.": r'\bhdi\b',
-    "LA EQUIDAD SEGUROS GENERALES ORGANISMO COOPERATIVO": r'\bequidad\b|\bcooperativo\b',
-    "LA PREVISORA S.A. COMPAÑIA DE SEGUROS": r'\bprevisora\b',
+    "LA EQUIDAD SEGUROS GENERALES ORGANISMO COOPERATIVO": r'\bequidad\b',
+    "LA PREVISORA S.A. COMPAÑIA DE SEGUROS": r'\bla previsora\b',
     "MAPFRE SEGUROS GENERALES DE COLOMBIA S.A.": r'\bmapfre\b',
-    "SEGUROS COMERCIALES BOLIVAR S.A": r'\bbolivar\b|\bcomerciales\b',
-    "SEGUROS DEL ESTADO S.A.": r'\bestado\b',
+    "SEGUROS COMERCIALES BOLIVAR S.A": r'\bseguros bolivar\b',
+    "SEGUROS DEL ESTADO S.A.": r'\bseguros del estado\b',
     "SEGUROS GENERALES SURAMERICANA S.A.": r'\bsuramericana\b',
     "ZURICH COLOMBIA SEGUROS S.A.": r'\bzurich\b'
 }
@@ -185,6 +187,7 @@ def identificar_datos(texto):
   texto = unicodedata.normalize('NFD', texto)
   texto = texto.encode('ascii', 'ignore').decode('utf-8')
   texto = texto.lower()
+  texto = re.sub(r'[^a-z0-9\s]', '', texto)
 
   # Tipo Documento
   for opcion, patron in opciones_tipo_documento.items():
@@ -339,7 +342,7 @@ def consulta_vehiculo():
         return query_vehiculo()
 
     case _:
-      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, VIN, SOAT, PVO, Guía de movilidad o RTM"
+      respuesta = "Indica cómo quieres hacer la consulta: por Placa y Propietario, Número VIN, o Número RTM"
       return(f"{respuesta}\n")
 
 # ---------------------------------
@@ -442,6 +445,15 @@ def generate_pdf(result):
   buffer = BytesIO()
   doc = SimpleDocTemplate(buffer, pagesize=letter)
 
+  # Cargar la imagen del logo
+  logo = Image("./assets/logo_mintransporte.png", width=181, height=109)  # Ajusta el tamaño según sea necesario
+
+  # Configurar la posición de la imagen (en la parte superior central)
+  logo.hAlign = 'CENTER'
+  logo.vAlign = 'TOP'
+
+  space_between_logo_and_table = Spacer(1, 20)
+
   data = [['Campo', 'Valor']]
   for column in result.columns:
       for value in result[column]:
@@ -450,17 +462,27 @@ def generate_pdf(result):
   table = Table(data)
 
   style = TableStyle([
-      ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+      ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#f57338")),
       ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-      ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+      ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
       ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-      ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-      ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+      ('FONTSIZE', (0, 0), (-1, 0), 14),
+      ('BOTTOMPADDING', (0, 0), (-1, 0), 9),
+      ('TOPPADDING', (0, 0), (-1, 0), 3),
       ('GRID', (0, 0), (-1, -1), 1, colors.black),
   ])
+
+  num_rows = len(data)
+  # Aplica colores alternados dinámicamente
+  for i in range(1, num_rows):  # Empieza en 1 para saltarse el encabezado
+      if i % 2 == 1:
+          style.add('BACKGROUND', (0, i), (-1, i), colors.HexColor("#FBE4D5"))
+      else:
+          style.add('BACKGROUND', (0, i), (-1, i), colors.white)
+
   table.setStyle(style)
 
-  doc.build([table])
+  doc.build([logo, space_between_logo_and_table, table])
   buffer.seek(0)
 
   # Guarda el archivo en la carpeta /reports
