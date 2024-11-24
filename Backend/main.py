@@ -107,10 +107,10 @@ def limpiar_datos(texto):
 # Método para predecir la intención
 # ---------------------------------
 bolsa_persona = [
-  "licencia", "conduccion", "multa", "infraccion", "multas", "infracciones", "certificados medicos"
+  "licencia", "conduccion", "multa", "infraccion", "multas", "infracciones", "certificados medicos", "comparendos", "comparendo"
 ]
 bolsa_vehiculo = [
-  "vehiculo", "carro", "automovil", "soat"
+  "soat"
 ]
 bolsa_stopwords = [
   "quiero", "consultar", "consulta", "averiguar", "preguntar", "pregunta", "solicitar", "verificar", "verifico", "acerca", "sobre",
@@ -152,7 +152,6 @@ def make_predictions(texto):
           return " ".join(palabras_filtradas)
 
       texto = remover_stopwords(texto, bolsa_stopwords)
-      print(texto)
 
       # Prediccion Modelo
       new_texts = [texto]
