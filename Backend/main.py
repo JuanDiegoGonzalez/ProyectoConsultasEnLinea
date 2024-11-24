@@ -80,10 +80,12 @@ var_numeroRTM = ""
 
 @app.post("/talk")
 def talk(input: DataModel):
-  identificar_datos(input.texto)
+  texto = limpiar_datos(input.texto)
+
+  identificar_datos(texto)
 
   if var_tipoConsulta == "":
-    return make_predictions(input)
+    return make_predictions(texto)
   
   elif var_tipoConsulta == "Consulta Persona":
     return consulta_persona()
@@ -92,51 +94,95 @@ def talk(input: DataModel):
     return consulta_vehiculo()
 
 # ---------------------------------
+# Método para limpiar los datos
+# ---------------------------------
+def limpiar_datos(texto):
+  texto = unicodedata.normalize('NFD', texto)
+  texto = texto.encode('ascii', 'ignore').decode('utf-8')
+  texto = texto.lower()
+  texto = re.sub(r'[^a-z0-9\s]', '', texto)
+  return texto
+
+# ---------------------------------
 # Método para predecir la intención
 # ---------------------------------
-def make_predictions(input: DataModel):
+bolsa_persona = [
+  "licencia", "conduccion", "multa", "infraccion", "multas", "infracciones", "certificados medicos"
+]
+bolsa_vehiculo = [
+  "vehiculo", "carro", "automovil", "soat"
+]
+bolsa_stopwords = [
+  "quiero", "consultar", "consulta", "averiguar", "preguntar", "pregunta", "solicitar", "verificar", "verifico", "acerca", "sobre",
+  "que", "cual", "cuales", "donde", "quien", "quienes", "cuantas", "cuantos", "como", "saber", "hacer",
+  "obtener", "obtengo", "recuperar", "recupero", "tramitar", "tramito"
+]
+
+def make_predictions(texto):
     global var_tipoConsulta
 
     # Tokenizar los textos de entrada para hacer la predicción
-    if (len(input.texto.split(" ")) <3):
+    if (len(texto.split(" ")) <3):
       return("¿Qué consulta te gustaría realizar?")
 
-    new_texts = [input.texto]
-    new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
+    # Limpieza
+    def contiene_palabras(texto, lista_palabras):
+        for palabra in lista_palabras:
+            if palabra.lower() in texto.lower():
+                return True
+        return False
 
-    # Hacer las predicciones
-    with torch.no_grad():
-        outputs = model(**new_encodings)
+    # Verificar si el texto contiene palabras de alguna lista
+    contiene_persona = contiene_palabras(texto, bolsa_persona)
+    contiene_vehiculo = contiene_palabras(texto, bolsa_vehiculo)
 
-    # Obtener las clases predichas
-    predictions = outputs.logits.argmax(dim=-1)
+    if contiene_persona and not contiene_vehiculo:
+      var_tipoConsulta = "Consulta Persona"
+      return consulta_persona()
 
-    # Mapear las predicciones a los nombres de las clases (Consulta vehículo, consulta persona, otra consulta)
-    predicted_labels = [label_mapping[pred] for pred in predictions.tolist()]
+    elif contiene_vehiculo and not contiene_persona:
+      var_tipoConsulta = "Consulta Vehículo"
+      return consulta_vehiculo()
 
-    # Asignar el tipo de consulta a la variable correspondiente y llamar la funcion que realiza esa consulta
-    for i, text in enumerate(new_texts):
-        result = predicted_labels[i]
+    else:
+      # Limpieza StopWords
+      def remover_stopwords(texto, stopwords):
+          palabras = texto.split()
+          palabras_filtradas = [palabra for palabra in palabras if palabra.lower() not in stopwords]
+          return " ".join(palabras_filtradas)
 
-        if result==0:
-          var_tipoConsulta = "Consulta Persona"
-          return consulta_persona()
-        
-        elif result==1:
-          var_tipoConsulta = "Consulta Vehículo"
-          return consulta_vehiculo()
-        
-        else:
-          respuesta = "Tu consulta no puede ser respondida a través de este chat. Intenta usar los enlaces de la página."
-          return(f"{respuesta}\n")
+      texto = remover_stopwords(texto, bolsa_stopwords)
+      print(texto)
+
+      # Prediccion Modelo
+      new_texts = [texto]
+      new_encodings = tokenizer(new_texts, truncation=True, padding=True, max_length=512, return_tensors='pt')
+      with torch.no_grad():
+          outputs = model(**new_encodings)  # Hacer las predicciones
+      predictions = outputs.logits.argmax(dim=-1)  # Obtener las clases predichas
+      predicted_labels = [label_mapping[pred] for pred in predictions.tolist()]  # Mapear las predicciones a los nombres de las clases (Consulta vehículo, consulta persona, otra consulta)
+
+      # Asignar el tipo de consulta a la variable correspondiente y llamar la funcion que realiza esa consulta
+      result = predicted_labels[0]
+
+      if result==0:
+        var_tipoConsulta = "Consulta Persona"
+        return consulta_persona()
+
+      elif result==1:
+        var_tipoConsulta = "Consulta Vehículo"
+        return consulta_vehiculo()
+      
+      else:
+        respuesta = "Tu consulta no puede ser respondida a través de este chat. Intenta usar los enlaces de la página."
+        return(f"{respuesta}\n")
 
 # ---------------------------------
 # Método para identificar datos
 # ---------------------------------
-
 # Patrones regex para los datos alfanuméricos
 patron_VIN = r'\b[a-hj-npr-z0-9]{17}\b' # Para VIN alfanumérico de 17 caracteres
-patron_SOAT = r'\b\d{13}\b'  # Para SOAT de 13 dígitos
+#patron_SOAT = r'\b\d{13}\b'  # Para SOAT de 13 dígitos
 patron_RTM = r'\b\d{8}\b'  # Para RTM de 8 dígitos
 patron_cedula1 = r'\b\d{8}\b'  # Para cédulas de 8 dígitos
 patron_cedula2 = r'\b\d{10}\b'  # Para cédulas de 10 dígitos
@@ -184,11 +230,6 @@ opciones_aseguradora = {
 def identificar_datos(texto):
   global var_tipoDocumento, var_numeroDocumento, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_consultarPor, var_aseguradora, var_numeroRTM
 
-  texto = unicodedata.normalize('NFD', texto)
-  texto = texto.encode('ascii', 'ignore').decode('utf-8')
-  texto = texto.lower()
-  texto = re.sub(r'[^a-z0-9\s]', '', texto)
-
   # Tipo Documento
   for opcion, patron in opciones_tipo_documento.items():
     if re.search(patron, texto):
@@ -223,14 +264,14 @@ def identificar_datos(texto):
     var_numeroVIN = busqueda.group()
 
   # SOAT
-  busqueda = re.search(patron_SOAT, texto)
-  if busqueda is not None:
-    var_numeroSOAT = busqueda.group()
+  #busqueda = re.search(patron_SOAT, texto)
+  #if busqueda is not None:
+  #  var_numeroSOAT = busqueda.group()
 
   # Aseguradora
-  for opcion, patron in opciones_aseguradora.items():
-    if re.search(patron, texto):
-      var_aseguradora = opcion
+  #for opcion, patron in opciones_aseguradora.items():
+  #  if re.search(patron, texto):
+  #    var_aseguradora = opcion
 
   # RTM
   busqueda = re.search(patron_RTM, texto)
