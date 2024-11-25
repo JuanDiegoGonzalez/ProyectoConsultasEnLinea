@@ -10,8 +10,6 @@ window.onload = function () {
    setTimeout(function () {
       const content = document.getElementById('chatbot-content');
       content.style.display = 'block'; // Mostrar el contenido del chatbot
-
-      // Mensaje de bienvenida al usuario
    }, 1500); // 1500 ms = 1.5 segundos
    restartVariables()
 };

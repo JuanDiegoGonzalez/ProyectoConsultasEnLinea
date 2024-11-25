@@ -282,15 +282,15 @@ def identificar_datos(texto):
 # ---------------------------------
 def consulta_persona():
   if (var_tipoDocumento == "") and (var_numeroDocumento == ""):
-    respuesta = "Indica el tipo y número de documento del propietario"
+    respuesta = "Indica el tipo y número de documento del propietario. Ejemplo: \"Cédula 1234567890\""
     return(f"{respuesta}\n")
   
   elif var_tipoDocumento == "":
-    respuesta = "Indica el tipo de documento del propietario"
+    respuesta = "Indica el tipo de documento del propietario. Ejemplo: \"Cédula\""
     return(f"{respuesta}\n")
   
   elif var_numeroDocumento == "":
-    respuesta = "Indica el número de documento del propietario"
+    respuesta = "Indica el número de documento del propietario. Ejemplo: \"1234567890\""
     return(f"{respuesta}\n")
   
   else:
@@ -303,31 +303,31 @@ def consulta_vehiculo():
   match var_consultarPor:
     case "Placa y Propietario":
       if (var_numeroPlaca == "") and (var_tipoDocumento == "") and (var_numeroDocumento == ""):
-        respuesta = "Indica la placa del vehículo y el tipo y número de documento del propietario"
+        respuesta = "Indica la placa del vehículo y el tipo y número de documento del propietario. Ejemplo: \"AWX123 Cédula 1234567890\""
         return(f"{respuesta}\n")
 
       elif (var_numeroPlaca == "") and (var_tipoDocumento == ""):
-        respuesta = "Indica la placa del vehículo y el tipo de documento del propietario"
+        respuesta = "Indica la placa del vehículo y el tipo de documento del propietario. Ejemplo: \"AWX123 Cédula\""
         return(f"{respuesta}\n")
       
       elif (var_numeroPlaca == "") and (var_numeroDocumento == ""):
-        respuesta = "Indica la placa del vehículo y el número de documento del propietario"
+        respuesta = "Indica la placa del vehículo y el número de documento del propietario. Ejemplo: \"AWX123 1234567890\""
         return(f"{respuesta}\n")
       
       elif (var_tipoDocumento == "") and (var_numeroDocumento == ""):
-        respuesta = "Indica el tipo y número de documento del propietario"
+        respuesta = "Indica el tipo y número de documento del propietario. Ejemplo: \"Cédula 1234567890\""
         return(f"{respuesta}\n")
       
       elif var_numeroPlaca == "":
-        respuesta = "Indica la placa del vehículo"
+        respuesta = "Indica la placa del vehículo. Ejemplo: \"AWX123\""
         return(f"{respuesta}\n")
 
       elif var_tipoDocumento == "":
-        respuesta = "Indica el tipo de documento del propietario"
+        respuesta = "Indica el tipo de documento del propietario. Ejemplo: \"Cédula\""
         return(f"{respuesta}\n")
       
       elif var_numeroDocumento == "":
-        respuesta = "Indica el número de documento del propietario"
+        respuesta = "Indica el número de documento del propietario. Ejemplo: \"1234567890\""
         return(f"{respuesta}\n")
       
       else:
@@ -335,7 +335,7 @@ def consulta_vehiculo():
 
     case "VIN":
       if var_numeroVIN == "":
-        respuesta = "Indica el número VIN del vehículo"
+        respuesta = "Indica el número VIN del vehículo. Ejemplo: \"1HGCM82633A123456\""
         return(f"{respuesta}\n")
       
       else:
@@ -359,7 +359,7 @@ def consulta_vehiculo():
 
     case "PVO":
       if var_numeroPlaca == "":
-        respuesta = "Indica la placa del vehículo"
+        respuesta = "Indica la placa del vehículo. Ejemplo: \"AWX123\""
         return(f"{respuesta}\n")
       
       else:
@@ -367,7 +367,7 @@ def consulta_vehiculo():
       
     case "Guía de movilidad":
       if var_numeroPlaca == "":
-        respuesta = "Indica la placa del vehículo"
+        respuesta = "Indica la placa del vehículo. Ejemplo: \"AWX123\""
         return(f"{respuesta}\n")
       
       else:
@@ -375,7 +375,7 @@ def consulta_vehiculo():
 
     case "RTM":
       if var_numeroRTM == "":
-        respuesta = "Indica el número de certificado RTM"
+        respuesta = "Indica el número de certificado RTM. Ejemplo: \"12345678\""
         return(f"{respuesta}\n")
       
       else:
