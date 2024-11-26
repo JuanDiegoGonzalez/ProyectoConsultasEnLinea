@@ -1,7 +1,7 @@
 // ---------------------------------
 // URL del Backend
 // ---------------------------------
-const apiBaseUrl = "http://127.0.0.1:8000";
+const apiBaseUrl = "http://localhost:8000";
 
 // ---------------------------------
 // Mostrar el chatbot y enviar mensaje de bienvenida después de 3 segundos
