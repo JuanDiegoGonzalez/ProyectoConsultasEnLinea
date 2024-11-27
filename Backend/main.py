@@ -74,24 +74,40 @@ var_numeroSOAT = ""
 var_aseguradora = ""
 var_numeroRTM = ""
 
+var_finalizo_consulta = False
+
 # ---------------------------------
 # Hilo principal
 # ---------------------------------
 
 @app.post("/talk")
 def talk(input: DataModel):
+  global var_finalizo_consulta
+
   texto = limpiar_datos(input.texto)
 
   identificar_datos(texto)
 
-  if var_tipoConsulta == "":
-    return make_predictions(texto)
-  
-  elif var_tipoConsulta == "Consulta Persona":
-    return consulta_persona()
-  
-  elif var_tipoConsulta == "Consulta Vehículo":
-    return consulta_vehiculo()
+  if not var_finalizo_consulta:
+    if var_tipoConsulta == "":
+      return make_predictions(texto)
+    
+    elif var_tipoConsulta == "Consulta Persona":
+      return consulta_persona()
+    
+    elif var_tipoConsulta == "Consulta Vehículo":
+      return consulta_vehiculo()
+  else:
+    respondio_si = re.search(r"\bsi\b", texto, re.IGNORECASE)
+    respondio_no = re.search(r"\bno\b", texto, re.IGNORECASE)
+
+    if respondio_si and (not respondio_no):
+      read_root()
+      return ("¿Con qué más te puedo ayudar?")
+    elif respondio_no and (not respondio_si):
+      return ("Esperamos haberte ayudado. ¡Que tengas un excelente día!")
+    else:
+      return("No entendí tu respuesta, ¿podrías repetirla? Si/No")
 
 # ---------------------------------
 # Método para limpiar los datos
@@ -152,6 +168,8 @@ def make_predictions(texto):
           return " ".join(palabras_filtradas)
 
       texto = remover_stopwords(texto, bolsa_stopwords)
+
+      print(texto)
 
       # Prediccion Modelo
       new_texts = [texto]
@@ -389,6 +407,8 @@ def consulta_vehiculo():
 # Query Consulta Persona
 # ---------------------------------
 def query_persona():
+  global var_finalizo_consulta
+
   excel_file = 'data/Datos_Dummy_Personas.xlsx'
   df = pd.read_excel(excel_file, dtype=str)
 
@@ -409,6 +429,7 @@ def query_persona():
         "pdf_url": pdf_file_path
     }
     
+    var_finalizo_consulta = True
     return JSONResponse(content=response_data)
   # Si no, se retorna el mensaje de error acorde a la consulta realizada
   else:
@@ -427,6 +448,8 @@ respuestas_error_vehiculos = {
 }
 
 def query_vehiculo():
+  global var_finalizo_consulta
+
   excel_file = 'data/Datos_Dummy_Vehiculos.xlsx'
   df = pd.read_excel(excel_file, dtype=str)
 
@@ -460,6 +483,7 @@ def query_vehiculo():
         "pdf_url": pdf_file_path
     }
     
+    var_finalizo_consulta = True
     return JSONResponse(content=response_data)
 
   # Si no, se retorna el mensaje de error acorde a la consulta realizada
@@ -544,7 +568,7 @@ def generate_pdf(result):
 # ---------------------------------
 @app.post("/new")
 def read_root():
-  global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM
+  global var_tipoConsulta, var_tipoDocumento, var_numeroDocumento, var_procedencia, var_consultarPor, var_numeroPlaca, var_numeroVIN, var_numeroSOAT, var_aseguradora, var_numeroRTM, var_finalizo_consulta
   
   var_tipoConsulta = ""
 
@@ -560,6 +584,8 @@ def read_root():
   var_numeroSOAT = ""
   var_aseguradora = ""
   var_numeroRTM = ""
+
+  var_finalizo_consulta = False
 
 # ---------------------------------
 # Descargar PDF

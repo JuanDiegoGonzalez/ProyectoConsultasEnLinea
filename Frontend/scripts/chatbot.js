@@ -2,6 +2,7 @@
 // URL del Backend
 // ---------------------------------
 const apiBaseUrl = "http://localhost:8000";
+var terminoConsulta = false
 
 // ---------------------------------
 // Mostrar el chatbot y enviar mensaje de bienvenida después de 3 segundos
@@ -143,10 +144,11 @@ document.getElementById('send-button').onclick = async function () {
    const inputField = document.getElementById('chatbot-input');
    const message = inputField.value.trim();
 
-   if (message) {
+   if (message && !terminoConsulta) {
       appendMessage(message, 'user');
       inputField.value = '';
 
+      
       // Envía el mensaje al Backend
       try {
          const response = await fetch(`${apiBaseUrl}/talk`, {
@@ -172,10 +174,15 @@ document.getElementById('send-button').onclick = async function () {
             
             // Agrega el link de descarga
             appendDownloadLink(data.pdf_url, 'bot');
+
+            appendMessage('¿Hay algo más en lo que te puedo ayudar? Si/No', 'bot');
          }
          // Si no, es un mensaje normal, solamente lo agrega
          else {
             appendMessage(data, 'bot');
+            if (data === "Esperamos haberte ayudado. ¡Que tengas un excelente día!") {
+               terminoConsulta = true
+            }
          }
       } catch (error) {
          console.error('Error:', error);
@@ -189,6 +196,7 @@ document.getElementById('send-button').onclick = async function () {
 // ---------------------------------
 async function restartVariables() {
    try {
+      terminoConsulta = false
       const response = await fetch(`${apiBaseUrl}/new`, {
          method: 'POST',
          headers: {
