@@ -6,5 +6,3 @@ Backend/venv/
 Backend/.idea/
 Backend/__pycache__/
 Backend/reports/
-
-*.joblib
