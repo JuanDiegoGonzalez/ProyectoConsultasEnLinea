@@ -1,7 +1,7 @@
 // ---------------------------------
 // URL del Backend
 // ---------------------------------
-const apiBaseUrl = "http://backend:8000";
+const apiBaseUrl = "http://localhost:8000";
 var terminoConsulta = false
 
 // ---------------------------------
